@@ -72,7 +72,7 @@ my_var do concate using "Hello!" -> do reverse -> do slice using 2, 4
 
 ### 5. Dynamic Property
 
-As it mentioned above, in Saytring, strings are treated as first-class citizens. This means that it avoids having variables with data type differ from string, such as integer.
+As it mentioned above, in Saytring, strings are treated as first-class citizens. This means that it avoids having variables with data type differ from string, such as int.
 
 To cover the shortage caused by the limitation of data type, we introduce **Dynamic Property** in Saytring.
 
@@ -164,27 +164,227 @@ Saytring has 5 comparison Operators
             |  identifier call_expr
             |  cond_expr
             |  expr comp_op expr
+            |  expr arith_op expr
             |  string
-            |  integer
+            |  int
+            |  true
+            |  false
 identifier ::= ID
             |  ID's ID
  decl_expr ::= define identifier
             |  define identifier as expr
             |  identifier has identifier [[, identifier]]*
  assi_expr ::= set identifier as expr
-   io_expr ::= ask string as identifier
+   io_expr ::= ask expr as identifier
             |  ask as identifier
-            |  say identifier
+            |  say expr
  call_expr ::= do identifier
             |  do identifier using expr [[, expr]]*
             |  do identifier on identifier
             |  do identifier using expr [[, expr]]* on identifier
-            |  call_expr [[chain_op call_expr]]+
+            |  call_expr [[chain_op expr ]]+
  cond_expr ::= if expr then expr
    comp_op ::= gt | lt | ge | le | eq
+  arith_op ::= - | +
 ```
+
 > TODO: add syntactic sugar
 
 ---
 
 ## Type System
+
+### 1. "Here is **NO TYPE** anymore"
+
+Saytring is designed to be a language that is friendly to users without programming background. So, we "cancel" types in Saytring.
+
+In Saytring, everything is a **string**, because runtime envrionment will automatically convert literal value of other types to string.
+
+```
+# Literal int of 1234
+1234 -> "1234"
+
+# Literal boolean of true
+true -> "true"
+
+# Literal List of ["a", "ab", "abc"]
+["a", "ab", "abc"] -> "{a}, {ab}, {abc}"
+```
+
+Here are some examples to show how converting works:
+
+```
+# my_var has literal value of int 114514
+define my_var as 114514
+say my_var                # output "114514"
+
+# my_var has literal value of bool true
+define my_var as true
+say my_var                # output "true"
+
+# return to my_var's last_result, so it is an int now
+my_var do get_length
+say my_var's last_result  # output "6"
+
+# function get_char() require int parameter
+my_var do get_char using my_var's last_result - 1
+say my_var's last_result  # output "5"
+```
+
+### 2. Type Checking
+
+The single-type design of Saytring will cut down its safety, since there is no explicit type information.
+
+For example:
+
+```
+# User want to declare a Bool type variable
+# And a value of string "true" is stored in my_var
+define my_var as true
+
+# get_char() is a function for strings logically
+my_var do get_char using 2
+
+say my_var's last_result  # output "u"
+```
+
+Although `my_var` is a Bool variable, this code won't create a runtime error. Because Saytring automatically stores `my_var` as a string and hide the fact that `my_var` is a Boolean value. Finally, `get_char()` will be happy with parameter types.
+
+However, it performs an action having no sense (get the third character of a Bool). This is a side effect caused by single-type design.
+
+In order to detect such logical errors as much as possible during compiling period, Saytring will conduct a type-checking before code generation. Like python, implicit type information of variables will be inferred based on context.
+
+For example:
+
+```
+# Explicitly declaration of content, the type of my_var is string
+define my_var as "Hello, world!"    # my_var : string
+
+define my_num as 114514             # my_num : int
+
+# Inferred from the function return type
+my_var do get_length                # my_var's last_result : int
+```
+
+### 3. Types
+
+There are 5 types in Saytring:
+
+- `string`
+- `int`
+- `list`
+- `bool`
+- `NULL_Type`
+
+`NULL_Type` is for variables have not been initialized or assigned value, and several expressions.
+
+### 4. Type Rules
+
+`E` is the type environment which contains type information of **identifiers**.
+
+`F` is the type environment which contains type information of **functions**.
+
+#### 1. Declaration
+
+- Hypothese:
+
+  `E[NULL_Type/ID] -> true`
+
+- Result:
+
+  `define ID : NULL_Type`
+
+  `ID has ID : NULL_Type`
+
+#### 2. Assignment
+
+- Hypothese:
+
+  `E, F -> e : T`
+
+  `T != NULL_Type`
+
+  `E[T/ID] -> true`
+
+- Result:
+
+  `define ID as e : NULL_Type`
+
+  `set ID as e : NULL_Type`
+
+#### 3. Identifier
+
+- Hypothese:
+
+  `E(ID)=T`
+
+- Result: `ID : T`
+
+#### 4. Function Call
+
+- Hypothese:
+
+  `F(f)=(T0, ..., Tn, Tn+1)`
+
+  `ei : int | string | list | bool , 0 <= i <= n`
+
+  `ei = Ti , 0 <= i <= n`
+
+  `E[Tn+1/ID] -> true`
+
+- Result:
+
+  `e0 do f [using e1...en] on ID : Tn+1`
+
+#### 5. Conditional
+
+- Hypothese:
+
+  `E, F -> e : bool`
+
+- Result: `if e then T : T`
+
+#### 6. Comparison
+
+- Hypothese:
+
+  `E, F -> e0 : string | int`
+
+  `E, F -> e1 : string | int`
+
+- Result: `e0 comp_op e1 : bool`
+
+#### 7. Arithmetic
+
+- Hypothese:
+
+  `E, F -> e0 : int`
+
+  `E, F -> e1 : int`
+
+- Result: `e0 arith e1 : int`
+
+#### 8. Constant
+
+- `true : bool`
+- `false: bool`
+- `i is an integer constant -> i : int`
+- `s is a string constant -> s : string`
+
+#### 9. Output
+
+- Hypothese:
+
+  `E, F -> e0 : int | string | bool | list`
+
+- Result: `say e0 : NULL_Type`
+
+#### 10. Input
+
+- Hypothese:
+
+  `E, F -> e0 : string`
+
+  `E[string/ID] -> true`
+
+- Result: `ask e0 as ID : NULL_Type`
