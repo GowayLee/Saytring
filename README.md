@@ -157,38 +157,63 @@ Saytring has 5 comparison Operators
 ## Specification of Syntax
 
 ```
->  program ::= [[expr]]+
-      expr ::= decl_expr
-            |  assi_expr
-            |  io_expr
-            |  identifier call_expr
-            |  cond_expr
-            |  expr comp_op expr
-            |  expr arith_op expr
-            |  string
-            |  int
-            |  true
-            |  false
-identifier ::= ID
-            |  ID's ID
- decl_expr ::= define identifier
-            |  define identifier as expr
-            |  identifier has identifier [[, identifier]]*
- assi_expr ::= set identifier as expr
-   io_expr ::= ask expr as identifier
-            |  ask as identifier
-            |  say expr
- call_expr ::= do identifier
-            |  do identifier using expr [[, expr]]*
-            |  do identifier on identifier
-            |  do identifier using expr [[, expr]]* on identifier
-            |  call_expr [[chain_op expr ]]+
- cond_expr ::= if expr then expr
-   comp_op ::= gt | lt | ge | le | eq
-  arith_op ::= - | +
+>       program ::= [[expr]]+
+           expr ::= decl_expr
+                 |  assi_expr
+                 |  io_expr
+                 |  identifier chain_call_expr
+                 |  cond_expr
+                 |  expr comp_op expr
+                 |  expr arith_op expr
+                 |  string
+                 |  int
+                 |  true
+                 |  false
+     identifier ::= ID
+                 |  ID's ID
+      decl_expr ::= define identifier
+                 |  define identifier as expr
+                 |  identifier has identifier [[, identifier]]*
+      assi_expr ::= set identifier as expr
+        io_expr ::= ask expr as identifier
+                 |  ask as identifier
+                 |  say expr
+      call_expr ::= do identifier
+                 |  do identifier using expr [[, expr]]*
+                 |  do identifier on identifier
+                 |  do identifier using expr [[, expr]]* on identifier
+chain_call_expr ::= call_expr
+                 |  if expr then call_expr
+                 |  chain_call_expr chain_op call_expr
+                 |  chain_call_expr chain_op if expr then call_expr
+      cond_expr ::= if expr then expr
+        comp_op ::= gt | lt | ge | le | eq
+       arith_op ::= - | +
 ```
 
-> TODO: add syntactic sugar
+> TODO: Add syntactic sugar
+
+### About Chain Call
+
+Chain Call is designed to make code more clean when multiple functions are called by **one** variable **in sequence**.
+
+```
+my_var do reverse -> de reverse on re_str -> do count_digit
+```
+
+In this example, the first `reverse()` will receive `my_var` as parameter and store return data in `my_var's last_result`.
+
+The second `reverse()` will receive `my_var's last_result` as parameter and store return data in `my_var's re_str` since the property is specified.
+
+The last `count_digit()` will receive `my_var's re_str` as parameter because the previous function call stores return data in this property. And finally, store return data in `my_var's last_result`.
+
+The following code shows the parsing result of chain call:
+
+```
+my_var do reverse on last_result
+my_var's last_result do reverse on re_str
+my_var's re_str do count_digit on last_result
+```
 
 ---
 
@@ -316,7 +341,7 @@ There are 5 types in Saytring:
 
 - Hypothese:
 
-  `E(ID)=T`
+  `E(ID) = T`
 
 - Result: `ID : T`
 
@@ -367,7 +392,7 @@ There are 5 types in Saytring:
 #### 8. Constant
 
 - `true : bool`
-- `false: bool`
+- `false : bool`
 - `i is an integer constant -> i : int`
 - `s is a string constant -> s : string`
 
@@ -381,6 +406,9 @@ There are 5 types in Saytring:
 
 #### 10. Input
 
+By default, the type of variable assgined by Input Expression is `string`. This will make that variable cannot be easily used in other expressions.
+User need to call `check_int()` `check_bool()` functions to switch the type of that variable to certain type. This force users to consider the case that the input from outer is not legal.
+
 - Hypothese:
 
   `E, F -> e0 : string`
@@ -388,3 +416,9 @@ There are 5 types in Saytring:
   `E[string/ID] -> true`
 
 - Result: `ask e0 as ID : NULL_Type`
+
+---
+
+## Runtime
+
+TODO:
