@@ -50,62 +50,61 @@ void update_position() {
 
 %x INLINE_COMMENT NORMAL_STRING_CONST ERROR_STRING_CONST
 
-DELIME_EXNL  	                                      [ \t\f\v\r]
-NUMBER		                                          -?[0-9]+
-ID		                                              [a-z][a-zA-Z0-9_]*
-SINGLE_CHAR_OPTER		                                [-+,]
-BLEONG                                              "\'s"
+DELIME_EXNL  	                                        [ \t\f\v\r]
+NUMBER		                                            -?[0-9]+
+ID		                                                [a-z][a-zA-Z0-9_]*
+SINGLE_CHAR_OPTER		                                  [-+,]
+BELONG                                                "\'s"
 
-CHAIN                                               ->
-GT                                                  gt
-LT                                                  lt
-GE                                                  ge
-LE                                                  le
-EQ                                                  eq
+CHAIN                                                 ->
+GT                                                    gt
+LT                                                    lt
+GE                                                    ge
+LE                                                    le
+EQ                                                    eq
 
 %%
 
  /*
   * Inline Comment
   */
-"#"                                                 BEGIN(INLINE_COMMENT);
-<INLINE_COMMENT>"\n"                                {
+"#"                                                   BEGIN(INLINE_COMMENT);
+<INLINE_COMMENT>"\n"                                  {
   yylloc.line++;
   BEGIN(INITIAL);
 }
-<INLINE_COMMENT>.                                   ;
+<INLINE_COMMENT>.                                     ;
 
  /*
   *  White spaces
   */
-"\n"                                                yylloc.line++;
-{DELIME_EXNL}+                                      ;
+"\n"                                                  yylloc.line++;
+{DELIME_EXNL}+                                        ;
 
  /*
   * Multi-character operator
   */
-{CHAIN}                                             return CHAIN;
-{BLEONG}                                            return BELONG;
-{GT}                                                return GT;
-{LT}                                                return LT;
-{GE}                                                return GE;
-{LE}                                                return LE;
-{EQ}                                                return EQ;
+{CHAIN}                                               return CHAIN;
+{BELONG}                                              return BELONG;
+{GT}                                                  return GT;
+{LT}                                                  return LT;
+{GE}                                                  return GE;
+{LE}                                                  return LE;
+{EQ}                                                  return EQ;
 
  /*
   *  Single-character operator
   */
-{SINGLE_CHAR_OPTER}                                 return yytext[0];
-
+{SINGLE_CHAR_OPTER}                                   return yytext[0];
 
  /*
   *  Boolean
   */
-true                                                {
+true                                                  {
 
   return TRUE;
 }
-false                                               {
+false                                                 {
 
   return FALSE;
 }
@@ -113,22 +112,22 @@ false                                               {
  /*
   *  Keyword
   */
-(?i:d)efine                                         return DEFINE;
-(?i:i)f                                             return IF;
-(?i:a)sk                                            return ASK;
-(?i:s)et                                            return SET;
-(?i:s)ay                                            return SAY;
-"as"                                                return AS;
-"has"                                               return HAS;
-"do"                                                return DO;
-"using"                                             return USING;
-"on"                                                return ON;
-"then"                                              return THEN;
+(?i:d)efine                                           return DEFINE;
+(?i:i)f                                               return IF;
+(?i:a)sk                                              return ASK;
+(?i:s)et                                              return SET;
+(?i:s)ay                                              return SAY;
+"as"                                                  return AS;
+"has"                                                 return HAS;
+"do"                                                  return DO;
+"using"                                               return USING;
+"on"                                                  return ON;
+"then"                                                return THEN;
 
  /*
   *  Number
   */
-{NUMBER}                                            {
+{NUMBER}                                              {
 
   return NUM;
 }
@@ -136,7 +135,7 @@ false                                               {
  /*
   *  Identifier
   */
-{ID}                                                {
+{ID}                                                  {
   yylval.symbol = new Symbol(yytext);
   return ID;
 }
@@ -144,12 +143,12 @@ false                                               {
  /*
   *  String constants (C syntax)
   */
-"\""																								{
+"\""                                                  {
 	BEGIN(NORMAL_STRING_CONST);
 	reset_string_buf();
 }
-<NORMAL_STRING_CONST>"\\"														is_escape = true;
-<NORMAL_STRING_CONST>"\n"														{
+<NORMAL_STRING_CONST>"\\"                             is_escape = true;
+<NORMAL_STRING_CONST>"\n"                             {
   yylloc.line++;
   if (is_escape) {
     is_escape = false;
@@ -160,23 +159,23 @@ false                                               {
     return ERROR;
   }
 }
-<NORMAL_STRING_CONST>"\""														{
+<NORMAL_STRING_CONST>"\""                             {
   *string_buf_ptr = '\0';
   BEGIN(INITIAL);
 	// yylval.symbol = stringtable.add_string(string_buf);
 	return STR_CONST;
 }
-<NORMAL_STRING_CONST>[^\0]*\0                       {
+<NORMAL_STRING_CONST>[^\0]*\0                         {
   BEGIN(ERROR_STRING_CONST);
   yylval.error_msg = "String contains null character";
   return ERROR;
 }
-<NORMAL_STRING_CONST><<EOF>>                        {
+<NORMAL_STRING_CONST><<EOF>>                          {
   BEGIN(INITIAL);
   yylval.error_msg = "EOF in string constant";
   return ERROR;
 }
-<NORMAL_STRING_CONST>.															{
+<NORMAL_STRING_CONST>.                                {
 	*string_buf_ptr = yytext[0];
 
   // Check if the string is too long
@@ -187,11 +186,11 @@ false                                               {
   }
 }
 
-<ERROR_STRING_CONST>"\""											      BEGIN(INITIAL);
-<ERROR_STRING_CONST>"\n"                            yylloc.line++; BEGIN(INITIAL);
-<ERROR_STRING_CONST>.                               ;
+<ERROR_STRING_CONST>"\""                              BEGIN(INITIAL);
+<ERROR_STRING_CONST>"\n"                              yylloc.line++; BEGIN(INITIAL);
+<ERROR_STRING_CONST>.                                 ;
 
-.                                                   {
+.                                                     {
   yylval.error_msg = yytext;
   return ERROR;
 }

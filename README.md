@@ -193,7 +193,17 @@ chain_call_expr ::= call_expr
 
 > TODO: Add syntactic sugar
 
-### About Chain Call
+### Syntactic Sugar
+
+Saytring emploies a great number of Syntactic Sugars to make its syntax familiar with natural language.
+
+#### 1. I/O Expression
+
+`ask [expr] as identifier` `say expr` are syntactic sugars for function call expressions.
+
+Compiler will translate them to expressions that perform a call to Input/Output functions build in Saytring Runtime.
+
+#### 2. Chain Call
 
 Chain Call is designed to make code more clean when multiple functions are called by **one** variable **in sequence**.
 
