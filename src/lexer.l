@@ -8,6 +8,7 @@
 #define YY_NO_UNPUT   /* keep g++ happy */
 
 extern YYSTYPE yylval;
+extern YYLTYPE yylloc;
 
 /* Max size of string constants */
 #define MAX_STR_CONST 1025
@@ -51,9 +52,9 @@ void update_position() {
 %x INLINE_COMMENT NORMAL_STRING_CONST ERROR_STRING_CONST
 
 DELIME_EXNL  	                                        [ \t\f\v\r]
-NUMBER		                                            -?[0-9]+
-ID		                                                [a-z][a-zA-Z0-9_]*
-SINGLE_CHAR_OPTER		                                  [-+,]
+NUMBER                                                -?[0-9]+
+ID                                                    [a-z][a-zA-Z0-9_]*
+SINGLE_CHAR_OPTER                                     [-+,]
 BELONG                                                "\'s"
 
 CHAIN                                                 ->
@@ -62,6 +63,7 @@ LT                                                    lt
 GE                                                    ge
 LE                                                    le
 EQ                                                    eq
+NE                                                    ne
 
 %%
 
@@ -91,6 +93,7 @@ EQ                                                    eq
 {GE}                                                  return GE;
 {LE}                                                  return LE;
 {EQ}                                                  return EQ;
+{NE}                                                  return NE;
 
  /*
   *  Single-character operator
@@ -101,12 +104,12 @@ EQ                                                    eq
   *  Boolean
   */
 true                                                  {
-
-  return TRUE;
+  yyllval.bool_val = true;
+  return BOOL_CONST;
 }
 false                                                 {
-
-  return FALSE;
+  yyllval.bool_val = false;
+  return BOOL_CONST;
 }
 
  /*
@@ -129,7 +132,7 @@ false                                                 {
   */
 {NUMBER}                                              {
 
-  return NUM;
+  return INT_CONST;
 }
 
  /*

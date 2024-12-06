@@ -43,15 +43,10 @@ public:
 /////////////// Identifier //////////////////
 class Identifier : public Expression {
 public:
+  Symbol *name;
+  Identifier(Symbol *id, YYLTYPE loc) : Expression(loc) { this->name = id; }
   Identifier(YYLTYPE loc) : Expression(loc) {}
-};
-
-class Single_Identifier : public Identifier {
-public:
-  Symbol *id;
-  Single_Identifier(Symbol *id, YYLTYPE loc) : Identifier(loc) {
-    this->id = id;
-  }
+  bool has_owner() { return false; }
 };
 
 class Owner_Identifier : public Identifier {
@@ -59,10 +54,16 @@ public:
   Symbol *owner_id;
   Symbol *id;
   Owner_Identifier(Symbol *owner_id, Symbol *id, YYLTYPE loc)
-      : Identifier(loc) {
+      : Identifier(id, loc) {
     this->owner_id = owner_id;
-    this->id = id;
   }
+  bool has_owner() { return true; }
+};
+
+class Nil_Identifier : public Identifier {
+public:
+  Nil_Identifier(YYLTYPE loc) : Identifier(loc) {}
+  bool has_owner() { return false; }
 };
 
 /////////////// Declaration //////////////////
@@ -107,37 +108,46 @@ public:
 /////////////// Function Call //////////////////
 class Call_Expr : public Expression {
 public:
-  Call_Expr(YYLTYPE loc) : Expression(loc) {}
-};
-
-class Direct_Call_Expr : public Call_Expr {
-public:
   Identifier *id;
   Identifier *func_name;
   std::vector<Expression *> *arg_list;
-  Identifier *return_name;
-  Direct_Call_Expr(Identifier *id, Identifier *func_name,
-                   std::vector<Expression *> *arg_list, Identifier *return_name,
-                   YYLTYPE loc)
-      : Call_Expr(loc) {
+  Identifier *return_id;
+  Call_Expr(Identifier *id, Identifier *func_name,
+            std::vector<Expression *> *arg_list, Identifier *return_id,
+            YYLTYPE loc)
+      : Expression(loc) {
     this->id = id;
     this->func_name = func_name;
     this->arg_list = arg_list;
-    this->return_name = return_name;
-  };
+    this->return_id = return_id;
+  }
+
+  Call_Expr(Identifier *func_name, std::vector<Expression *> *arg_list,
+            Identifier *return_id, YYLTYPE loc)
+      : Expression(loc) {
+    this->func_name = func_name;
+    this->arg_list = arg_list;
+    this->return_id = return_id;
+  }
+  void set_id(Identifier *id);
+  Symbol *get_id();
+  Symbol *get_return_id();
+  void set_return_id(Identifier *return_id);
+  // Infer default return_id
+  bool adjust_return_id();
 };
 
-class Cond_Call_Expr : public Call_Expr {
-public:
-  Expression *predictor;
-  Direct_Call_Expr *call_expr;
-  Cond_Call_Expr(Expression *predictor, Direct_Call_Expr *call_expr,
-                 YYLTYPE loc)
-      : Call_Expr(loc) {
-    this->predictor = predictor;
-    this->call_expr = call_expr;
-  }
-};
+// class Cond_Call_Expr : public Call_Expr {
+// public:
+//   Expression *predictor;
+//   Direct_Call_Expr *call_expr;
+//   Cond_Call_Expr(Expression *predictor, Direct_Call_Expr *call_expr,
+//                  YYLTYPE loc)
+//       : Call_Expr(loc) {
+//     this->predictor = predictor;
+//     this->call_expr = call_expr;
+//   }
+// };
 
 /////////////// Conditional //////////////////
 class Cond_Expr : public Expression {
@@ -155,9 +165,12 @@ public:
 class Comp_Expr : public Expression {
 public:
   Expression *e1;
+  Symbol *op;
   Expression *e2;
-  Comp_Expr(Expression *e1, Expression *e2, YYLTYPE loc) : Expression(loc) {
+  Comp_Expr(Expression *e1, Symbol *op, Expression *e2, YYLTYPE loc)
+      : Expression(loc) {
     this->e1 = e1;
+    this->op = op;
     this->e2 = e2;
   }
 };
@@ -166,9 +179,12 @@ public:
 class Arith_Expr : public Expression {
 public:
   Expression *e1;
+  Symbol *op;
   Expression *e2;
-  Arith_Expr(Expression *e1, Expression *e2, YYLTYPE loc) : Expression(loc) {
+  Arith_Expr(Expression *e1, Symbol *op, Expression *e2, YYLTYPE loc)
+      : Expression(loc) {
     this->e1 = e1;
+    this->op = op;
     this->e2 = e2;
   }
 };
