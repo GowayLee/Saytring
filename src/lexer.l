@@ -51,7 +51,7 @@ int yycolumn = 1;
 DELIME_EXNL  	                                        [ \t\f\v\r]
 NUMBER                                                -?[0-9]+
 ID                                                    [a-z][a-zA-Z0-9_]*
-SINGLE_CHAR_OPTER                                     [-+,()\[\]]
+SINGLE_CHAR_OPTER                                     [-+,;()\[\]]
 BELONG                                                "\'s"
 
 CHAIN                                                 ->
@@ -125,7 +125,7 @@ false                                                 {
 "on"                                                  return ON;
 "then"                                                return THEN;
 "else"                                                return ELSE;
-"endif"                                               return ENDIF;                     
+"endif"                                               return ENDIF;
 
  /*
   *  Number

@@ -14,16 +14,17 @@ int main(int argc, char **argv) {
 
     if (argc > 1) {
         inputFile = fopen(argv[1], "r");
+        curr_filename = argv[1];
         if (!inputFile) {
             perror("Failed to open file");
             return EXIT_FAILURE;
         }
     } else {
-        // 如果没有提供文件，则默认输入为标准输入
+        // Set stdin as input if no file has been specified
         inputFile = stdin;
     }
 
-    yyin = inputFile;  // 指定输入源
+    yyin = inputFile;
 
     if (yyparse() == 0) {
         printf("Parsing completed successfully!\n");

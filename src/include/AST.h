@@ -4,18 +4,7 @@
 #include "symtab.h"
 #include <iostream>
 #include <vector>
-
-struct YYLTYPE {
-  int first_line;
-  int first_column;
-  int last_line;
-  int last_column;
-  YYLTYPE() : first_line(1), first_column(1), last_line(1), last_column(1) {}
-
-  YYLTYPE(int first_line, int first_column, int last_line, int last_column)
-      : first_line(first_line), first_column(first_column),
-        last_line(last_line), last_column(last_column) {}
-};
+#include "parser.tab.h"
 
 class AST_Node {
 public:

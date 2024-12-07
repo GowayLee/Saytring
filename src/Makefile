@@ -10,11 +10,13 @@ CXXINCLUDE = -I./include -I.
 CXXFLAGS = -Wno-write-strings -g ${CXXINCLUDE}
 BISONFLAGS = -d -y
 
-OBJS = main.o lexer.o parser.o AST.o symtab.o
+OBJS = main.o lexer.o parser.o AST.o symtab.o util.o
 
 TARGET = my_parser
 
 all: $(TARGET)
+
+build: $(TARGET)
 	mv *.o ${BUILDDIR}/
 	mv $(TARGET) ${BUILDDIR}/
 	mv parser.tab.h ${BUILDDIR}/
@@ -24,27 +26,33 @@ all: $(TARGET)
 $(TARGET): $(OBJS)
 	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS)
 
-main.o: main.cc ${INCLUDEDIR}/AST.h
+main.o: main.cc ${INCLUDEDIR}/AST.h parser.tab.h
 	$(CXX) $(CXXFLAGS) -c main.cc
 
-AST.o: AST.cc ${INCLUDEDIR}/AST.h ${INCLUDEDIR}/symtab.h
+AST.o: AST.cc parser.tab.h ${INCLUDEDIR}/AST.h ${INCLUDEDIR}/symtab.h
 	$(CXX) $(CXXFLAGS) -c AST.cc
 
 symtab.o: symtab.cc ${INCLUDEDIR}/symtab.h
 	$(CXX) $(CXXFLAGS) -c symtab.cc
 
-lexer.o: lexer.l parser.o
+util.o: util.cc parser.tab.h ${INCLUDEDIR}/AST.h ${INCLUDEDIR}/symtab.h
+	$(CXX) $(CXXFLAGS) -c util.cc
+
+lexer.o: lexer.l parser.tab.h
 	$(FLEX) -o lexer.yy.cc lexer.l
 	$(CXX) $(CXXFLAGS) -c lexer.yy.cc -o lexer.o
 
-parser.o: parser.y ${INCLUDEDIR}/AST.h ${INCLUDEDIR}/symtab.h
+parser.o: parser.tab.h parser.tab.cc ${INCLUDEDIR}/AST.h ${INCLUDEDIR}/symtab.h ${INCLUDEDIR}/util.h
+	$(CXX) $(CXXFLAGS) -c parser.tab.cc -o parser.o
+
+parser.tab.h parser.tab.cc: parser.y
 	$(BISON) $(BISONFLAGS) parser.y
 	mv y.tab.c parser.tab.cc
 	mv y.tab.h parser.tab.h
-	$(CXX) $(CXXFLAGS) -c parser.tab.cc -o parser.o
 
 clean:
 	cd ${BUILDDIR} && rm -f $(TARGET) $(OBJS) parser.tab.cc parser.tab.h lexer.yy.cc
+	rm -f $(TARGET) $(OBJS) parser.tab.cc parser.tab.h lexer.yy.cc
 
 dotest:
-	${BUILDDIR}/$(TARGET) ../test/1.say
+	${BUILDDIR}/$(TARGET) ../test/1.say || ./$(TARGET) ../test/1.say
