@@ -9,7 +9,7 @@ class Symbol {
 protected:
   char *str; // the string
 public:
-  Symbol(char *s);
+  Symbol(char *s) { this->str = s; }
 
   std::ostream &print(std::ostream &s) const;
 

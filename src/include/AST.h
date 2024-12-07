@@ -6,9 +6,15 @@
 #include <vector>
 
 struct YYLTYPE {
-  int line;
-  int column;
-  YYLTYPE() : line(0), column(0) {}
+  int first_line;
+  int first_column;
+  int last_line;
+  int last_column;
+  YYLTYPE() : first_line(1), first_column(1), last_line(1), last_column(1) {}
+
+  YYLTYPE(int first_line, int first_column, int last_line, int last_column)
+      : first_line(first_line), first_column(first_column),
+        last_line(last_line), last_column(last_column) {}
 };
 
 class AST_Node {
@@ -44,20 +50,21 @@ public:
 class Identifier : public Expression {
 public:
   Symbol *name;
-  Identifier(Symbol *id, YYLTYPE loc) : Expression(loc) { this->name = id; }
+  Identifier(Symbol *name, YYLTYPE loc) : Expression(loc) { this->name = name; }
   Identifier(YYLTYPE loc) : Expression(loc) {}
   bool has_owner() { return false; }
 };
 
 class Owner_Identifier : public Identifier {
 public:
-  Symbol *owner_id;
-  Symbol *id;
-  Owner_Identifier(Symbol *owner_id, Symbol *id, YYLTYPE loc)
-      : Identifier(id, loc) {
-    this->owner_id = owner_id;
+  Symbol *owner_name;
+  Symbol *name;
+  Owner_Identifier(Symbol *owner_name, Symbol *name, YYLTYPE loc)
+      : Identifier(name, loc) {
+    this->owner_name = owner_name;
   }
   bool has_owner() { return true; }
+  Identifier *to_Identifier();
 };
 
 class Nil_Identifier : public Identifier {
@@ -108,56 +115,92 @@ public:
 /////////////// Function Call //////////////////
 class Call_Expr : public Expression {
 public:
+  Call_Expr(YYLTYPE loc) : Expression(loc) {}
+  virtual bool is_cond_call() = 0;
+};
+
+class Direct_Call_Expr : public Call_Expr {
+public:
   Identifier *id;
   Identifier *func_name;
   std::vector<Expression *> *arg_list;
   Identifier *return_id;
-  Call_Expr(Identifier *id, Identifier *func_name,
-            std::vector<Expression *> *arg_list, Identifier *return_id,
-            YYLTYPE loc)
-      : Expression(loc) {
+  Direct_Call_Expr(Identifier *id, Identifier *func_name,
+                   std::vector<Expression *> *arg_list, Identifier *return_id,
+                   YYLTYPE loc)
+      : Call_Expr(loc) {
     this->id = id;
     this->func_name = func_name;
     this->arg_list = arg_list;
     this->return_id = return_id;
   }
 
-  Call_Expr(Identifier *func_name, std::vector<Expression *> *arg_list,
-            Identifier *return_id, YYLTYPE loc)
-      : Expression(loc) {
+  Direct_Call_Expr(Identifier *func_name, std::vector<Expression *> *arg_list,
+                   Identifier *return_id, YYLTYPE loc)
+      : Call_Expr(loc) {
     this->func_name = func_name;
     this->arg_list = arg_list;
     this->return_id = return_id;
   }
   void set_id(Identifier *id);
   Symbol *get_id();
-  Symbol *get_return_id();
+  Symbol *get_return_name();
   void set_return_id(Identifier *return_id);
+  bool is_cond_call() { return false; }
   // Infer default return_id
   bool adjust_return_id();
 };
 
-// class Cond_Call_Expr : public Call_Expr {
-// public:
-//   Expression *predictor;
-//   Direct_Call_Expr *call_expr;
-//   Cond_Call_Expr(Expression *predictor, Direct_Call_Expr *call_expr,
-//                  YYLTYPE loc)
-//       : Call_Expr(loc) {
-//     this->predictor = predictor;
-//     this->call_expr = call_expr;
-//   }
-// };
+class Cond_Call_Expr : public Call_Expr {
+public:
+  Expression *predictor;
+  Direct_Call_Expr *call_expr;
+
+  Cond_Call_Expr(Expression *pre, Identifier *id, Identifier *func_name,
+                 std::vector<Expression *> *arg_list, Identifier *return_id,
+                 YYLTYPE loc)
+      : Call_Expr(loc) {
+    this->predictor = pre;
+    this->call_expr =
+        new Direct_Call_Expr(id, func_name, arg_list, return_id, loc);
+  }
+
+  Cond_Call_Expr(Expression *pre, Identifier *func_name,
+                 std::vector<Expression *> *arg_list, Identifier *return_id,
+                 YYLTYPE loc)
+      : Call_Expr(loc) {
+    this->predictor = pre;
+    this->call_expr = new Direct_Call_Expr(func_name, arg_list, return_id, loc);
+  }
+
+  Cond_Call_Expr(Expression *pre, Direct_Call_Expr *call_expr, YYLTYPE loc)
+      : Call_Expr(loc) {
+    this->predictor = pre;
+    this->call_expr = call_expr;
+  }
+
+  bool is_cond_call() { return true; }
+};
 
 /////////////// Conditional //////////////////
 class Cond_Expr : public Expression {
 public:
   Expression *predictor;
   Expression *then;
+  Expression *_else;
+  Cond_Expr(Expression *predictor, Expression *then, Expression *_else,
+            YYLTYPE loc)
+      : Expression(loc) {
+    this->predictor = predictor;
+    this->then = then;
+    this->_else = _else;
+  }
+
   Cond_Expr(Expression *predictor, Expression *then, YYLTYPE loc)
       : Expression(loc) {
     this->predictor = predictor;
     this->then = then;
+    this->_else = new Nil_Expr(loc);
   }
 };
 

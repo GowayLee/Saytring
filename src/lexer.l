@@ -1,11 +1,10 @@
 %{
 
-#include <stdlib.h> /* provide atoi */
+#include <vector>
 #include "parser.tab.h"
 #include "symtab.h"
-#include "AST.h"
 
-#define YY_NO_UNPUT   /* keep g++ happy */
+// #define YY_NO_UNPUT   /* keep g++ happy */
 
 extern YYSTYPE yylval;
 extern YYLTYPE yylloc;
@@ -30,31 +29,29 @@ void reset_string_buf() {
 
 // YYLTYPE is defined in AST.h
 // Record column number
-#define YY_USER_ACTION update_position();
+extern int yylineno;
+extern int yycolumn;
 
-int prev_lineno = 1,
-    prev_yyleng = yyleng;
-
-void update_position() {
-  if (yytext[0] == '\0') return;
-  if (prev_lineno != yylloc.line) {
-    yylloc.column = 0;
-    prev_lineno = yylloc.column;
-  }
-  yylloc.column += prev_yyleng;
-  prev_yyleng = yyleng;
-}
+int yycolumn = 1;
 
 %}
 
 %option noyywrap
+
+%{
+#define YY_USER_ACTION \
+    yylloc.first_line = yylloc.last_line = yylineno; \
+    yylloc.first_column = yycolumn; \
+    yycolumn += yyleng; \
+    yylloc.last_column = yycolumn - 1;
+%}
 
 %x INLINE_COMMENT NORMAL_STRING_CONST ERROR_STRING_CONST
 
 DELIME_EXNL  	                                        [ \t\f\v\r]
 NUMBER                                                -?[0-9]+
 ID                                                    [a-z][a-zA-Z0-9_]*
-SINGLE_CHAR_OPTER                                     [-+,]
+SINGLE_CHAR_OPTER                                     [-+,()\[\]]
 BELONG                                                "\'s"
 
 CHAIN                                                 ->
@@ -72,7 +69,8 @@ NE                                                    ne
   */
 "#"                                                   BEGIN(INLINE_COMMENT);
 <INLINE_COMMENT>"\n"                                  {
-  yylloc.line++;
+  yylineno++;
+  yycolumn = 1;
   BEGIN(INITIAL);
 }
 <INLINE_COMMENT>.                                     ;
@@ -80,7 +78,7 @@ NE                                                    ne
  /*
   *  White spaces
   */
-"\n"                                                  yylloc.line++;
+"\n"                                                  yylineno++; yycolumn = 1;
 {DELIME_EXNL}+                                        ;
 
  /*
@@ -104,11 +102,11 @@ NE                                                    ne
   *  Boolean
   */
 true                                                  {
-  yyllval.bool_val = true;
+  yylval.bool_val = true;
   return BOOL_CONST;
 }
 false                                                 {
-  yyllval.bool_val = false;
+  yylval.bool_val = false;
   return BOOL_CONST;
 }
 
@@ -126,12 +124,14 @@ false                                                 {
 "using"                                               return USING;
 "on"                                                  return ON;
 "then"                                                return THEN;
+"else"                                                return ELSE;
+"endif"                                               return ENDIF;                     
 
  /*
   *  Number
   */
 {NUMBER}                                              {
-
+	yylval.symbol = new Symbol(yytext);
   return INT_CONST;
 }
 
@@ -152,7 +152,8 @@ false                                                 {
 }
 <NORMAL_STRING_CONST>"\\"                             is_escape = true;
 <NORMAL_STRING_CONST>"\n"                             {
-  yylloc.line++;
+  yylineno++;
+  yycolumn = 1;
   if (is_escape) {
     is_escape = false;
   } else {
@@ -165,7 +166,7 @@ false                                                 {
 <NORMAL_STRING_CONST>"\""                             {
   *string_buf_ptr = '\0';
   BEGIN(INITIAL);
-	// yylval.symbol = stringtable.add_string(string_buf);
+	yylval.symbol = new Symbol(string_buf);
 	return STR_CONST;
 }
 <NORMAL_STRING_CONST>[^\0]*\0                         {
@@ -190,7 +191,7 @@ false                                                 {
 }
 
 <ERROR_STRING_CONST>"\""                              BEGIN(INITIAL);
-<ERROR_STRING_CONST>"\n"                              yylloc.line++; BEGIN(INITIAL);
+<ERROR_STRING_CONST>"\n"                              yylineno++; BEGIN(INITIAL);
 <ERROR_STRING_CONST>.                                 ;
 
 .                                                     {

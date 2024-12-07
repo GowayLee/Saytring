@@ -8,14 +8,11 @@
 extern char *curr_filename;
 
 // YYLTYPE is defined in AST.h
-# define YYLTYPE_IS_DECLARED 1
-# define YYLTYPE_IS_TRIVIAL 1
+#define YYLTYPE_IS_DECLARED 1
+#define YYLTYPE_IS_TRIVIAL 1
 
-extern YYLTYPE yylloc;
 void yyerror(const char *s, YYLTYPE loc);
 void yyerror(const char *s);
-
-#define YYLTYPE_IS_DECLARED 1
 
 extern int yylex();
 
@@ -31,14 +28,16 @@ static Identifier *temp_owner;
 
 %}
 
+%locations
+
 /* a union of all the types that can be the result of parsing actions. */
 %union {
   bool bool_val;
-  Symbol *symbol;
-  Program *program;
-  Expression *expression;
-  Direct_Call_Expr *direct_call_expr;
-  Identifier *identifier;
+  class Symbol *symbol;
+  class Program *program;
+  class Expression *expression;
+  class Direct_Call_Expr *direct_call_expr;
+  class Identifier *identifier;
   std::vector<Expression *> *expressions;
   char *error_msg;
 }
@@ -94,11 +93,11 @@ expression : decl_expr        { $$ = $1; }
            | io_expr          { $$ = $1; }
            | cond_expr        { $$ = $1; }
            | call_expr        ;
-           | expression comp_op expression
+           | expression comp_op expression ';'
            {
              $$ = new Comp_Expr($1, $2, $3, @1);
            }
-           | expression arith_op expression
+           | expression arith_op expression ';'
            {
              $$ = new Arith_Expr($1, $2, $3, @1);
            }
@@ -131,9 +130,9 @@ identifier : ID
            }
            ;
 
-decl_expr : DEFINE identifier AS expression
+decl_expr : DEFINE identifier AS '(' expression ')'
           {
-            $$ = new Var_Decl_Expr($2, $4, @2);
+            $$ = new Var_Decl_Expr($2, $5, @2);
           }
           ;
 
@@ -174,9 +173,9 @@ dummy_identifier_list : identifier
                       }
                       ;
 
-assi_expr : SET identifier AS expression
+assi_expr : SET identifier AS '(' expression ')'
           {
-            $$ = new Assi_Expr($2, $4, @2);
+            $$ = new Assi_Expr($2, $5, @2);
           }
           ;
 
@@ -333,11 +332,11 @@ io_expr : ASK expression AS identifier
           call_expr->adjust_return_id(); // last_result is not a property of another variable
           $$ = call_expr;
         }
-        | SAY expression
+        | SAY '(' expression ')'
         {
           std::vector<Expression *> *args = new std::vector<Expression *>;
-          args->push_back($2);
-          Direct_Call_Expr *call_expr = new Direct_Call_Expr(new Nil_Identifier(@2), new Identifier(new Symbol("say"), @2), args, new Nil_Identifier(@2), @2);
+          args->push_back($3);
+          Direct_Call_Expr *call_expr = new Direct_Call_Expr(new Nil_Identifier(@3), new Identifier(new Symbol("say"), @3), args, new Nil_Identifier(@3), @3);
           $$ = call_expr;
         }
         ;
@@ -349,7 +348,7 @@ void yyerror(const char *s) {
 }
 
 void yyerror(const char *s, YYLTYPE loc) {
-  std::cerr << "\"" << curr_filename << "\" :" << loc.line << ":" << loc.column
+  std::cerr << "\"" << curr_filename << "\" :" << loc.first_line << ":" << loc.first_column
             << ": " << s << " at or near ";
   std::cerr << std::endl;
   omerrs++;
