@@ -161,7 +161,7 @@ Saytring has 5 comparison Operators
            expr ::= decl_expr
                  |  assi_expr
                  |  io_expr
-                 |  identifier chain_call_expr
+                 |  call_expr
                  |  cond_expr
                  |  expr comp_op expr
                  |  expr arith_op expr
@@ -171,23 +171,25 @@ Saytring has 5 comparison Operators
                  |  false
      identifier ::= ID
                  |  ID's ID
-      decl_expr ::= define identifier
-                 |  define identifier as expr
-                 |  identifier has identifier [[, identifier]]*
-      assi_expr ::= set identifier as expr
+      decl_expr ::= define identifier as '(' expr ')'
+                 |  identifier has '[' identifier [[, identifier]]* ']'
+      assi_expr ::= set identifier as '(' expr ')'
         io_expr ::= ask expr as identifier
                  |  ask as identifier
-                 |  say expr
-      call_expr ::= do identifier
-                 |  do identifier using expr [[, expr]]*
+                 |  say '(' expr ')'
+      call_expr ::= identifier func_expr
+                 |  call_expr chain_call_expr
+chain_call_expr ::= chain_op func_expr
+                 |  chain_op cond_func_expr
+                 |  chain_call_expr chain_op func_expr
+                 |  chain_call_expr chain_op cond_func_expr
+      func_expr ::= do identifier
+                 |  do identifier using '[' expr [[, expr]]* ']'
                  |  do identifier on identifier
-                 |  do identifier using expr [[, expr]]* on identifier
-chain_call_expr ::= call_expr
-                 |  if expr then call_expr
-                 |  chain_call_expr chain_op call_expr
-                 |  chain_call_expr chain_op if expr then call_expr
-      cond_expr ::= if expr then expr
-        comp_op ::= gt | lt | ge | le | eq
+                 |  do identifier using '[' expr [[, expr]]* ']' on identifier
+ cond_func_expr ::= '(' if expr then func_expr ')'
+      cond_expr ::= if expr then expr else expr endif
+        comp_op ::= gt | lt | ge | le | eq | ne
        arith_op ::= - | +
 ```
 
