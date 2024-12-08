@@ -22,11 +22,11 @@ Program *ast_root;            /* the result of the parse  */
 int omerrs = 0;               /* number of errors in lexing and parsing */
 
 // Temp variables
+bool has_pushed_back = false;
 std::vector<Expression *> *global_expr_list = new std::vector<Expression *>;
 std::vector<Identifier *> *temp_identifier_list = new std::vector<Identifier *>;
 std::vector<Call_Expr *> *temp_call_list = new std::vector<Call_Expr *>;
 Identifier *temp_return_id;
-Identifier *temp_owner;
 
 %}
 
@@ -73,27 +73,31 @@ Identifier *temp_owner;
 
 program : expr_list
         {
-          ast_root = new Program($1, YYLTYPE());
+          ast_root = new Program(global_expr_list, YYLTYPE());
         }
         ;
 
 expr_list : expression
           {
-            global_expr_list->push_back($1);
+            if (!has_pushed_back)
+              global_expr_list->push_back($1);
+            has_pushed_back = false;
           }
           | expr_list expression
           {
-            global_expr_list->push_back($2);
+            if (!has_pushed_back)
+              global_expr_list->push_back($2);
+            has_pushed_back = false;
           }
-          ;
+                 ;
 
 expression : decl_expr        { $$ = $1; }
-           | property_decl_expr ;
            | assi_expr        { $$ = $1; }
            | io_expr          { $$ = $1; }
            | cond_expr        { $$ = $1; }
            | identifier       { $$ = $1; }
-           | call_expr        ;
+           | property_decl_expr ;
+           | call_expr          ;
            | expression comp_op expression ';'
            {
              $$ = new Comp_Expr($1, $2, $3, @1);
@@ -154,6 +158,7 @@ property_decl_expr : identifier HAS '[' dummy_identifier_list ']'
                          }
                          global_expr_list->push_back(new Property_Decl_Expr($1, property_id, property_id->location));
                        }
+                       has_pushed_back = true;
                      }
                    }
                    ;
@@ -183,12 +188,22 @@ assi_expr : SET identifier AS '(' expression ')'
 parameter_list : expression
                {
                  $$ = new std::vector<Expression *>;
-                 $$->push_back($1);
+                 if (!has_pushed_back)
+                   $$->push_back($1);
+                 else {
+                   $$->push_back(temp_return_id);
+                   has_pushed_back = false;
+                 }
                }
                | expression ',' parameter_list
                {
                  $$ = $3;
-                 $$->push_back($1);
+                 if (!has_pushed_back)
+                   $$->push_back($1);
+                 else {
+                   $$->push_back(temp_return_id);
+                   has_pushed_back = false;
+                 }
                }
                | error ','
                {
@@ -227,6 +242,7 @@ call_expr : identifier dummy_chain_call_list
                 global_expr_list->push_back(direct_expr);
               }
             }
+            has_pushed_back = true;
           }
           ;
 
@@ -322,7 +338,12 @@ arith_op : '+'
 io_expr : ASK expression AS identifier
         {
           std::vector<Expression *> *args = new std::vector<Expression *>;
-          args->push_back($2);
+          if (!has_pushed_back)
+            args->push_back($2);
+          else {
+            args->push_back(temp_return_id);
+            has_pushed_back = false;
+          }
           Direct_Call_Expr *call_expr = new Direct_Call_Expr($4, new Single_Identifier(new Symbol("ask"), @2), args, new Nil_Identifier(@2), @4);
           call_expr->adjust_return_id(); // last_result is not a property of another variable
           $$ = call_expr;
@@ -337,7 +358,12 @@ io_expr : ASK expression AS identifier
         | SAY '(' expression ')'
         {
           std::vector<Expression *> *args = new std::vector<Expression *>;
-          args->push_back($3);
+          if (!has_pushed_back)
+            args->push_back($3);
+          else {
+            args->push_back(temp_return_id);
+            has_pushed_back = false;
+          }
           Direct_Call_Expr *call_expr = new Direct_Call_Expr(new Nil_Identifier(@3), new Single_Identifier(new Symbol("say"), @3), args, new Nil_Identifier(@3), @3);
           $$ = call_expr;
         }
