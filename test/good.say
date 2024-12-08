@@ -1,0 +1,65 @@
+# Definition of string variable
+define var as ("init var")
+define var2 as ("init var2")
+
+# Definition of integer variable
+define num as (1234)
+
+# Definition of boolean variable
+define bool_var as (true)
+
+# Assign
+set var as ("another str")
+set num as (4321)
+set bool_var as (false)
+
+# Declaration of property
+var has [length]
+var2 has [length, digit_count]
+
+# Assign to property
+set var's length as (10)
+set var2's digit_count as (20)
+
+# I/O expressions
+ask "Enter password: " as passwor
+ask as password
+say (password)
+say ("Thankyou")
+
+# Plain call expression
+var do reverse
+var do to_string on length
+var do slice using [1, 3]
+var do slice using [1, 3] on length
+var do slice using [num, num2, 12] on length
+
+# Chain call expression
+var do reverse -> do slice using [1, 3] -> do count_digit on lenth
+var do reverse
+ -> (if bool_var then do count_reverse on lenth)
+ -> do count_digit on lenth
+ -> (if bool_var then do xixi using [var1, var3, "feiqilai"])
+
+var's length do reverse on var's feiji
+          -> do count_digit on var's length
+
+# Conditional expression
+if bool_var then
+  var do reverse
+else
+  var do xixi
+endif
+
+# Complex nested
+var's length do count_digit using [var's reverse_str] on reverse_str_len
+          -> do xixixi using ["feiqilai", var2's len, roti]
+
+set var's length as (var2 do reverse)
+say (var do xixi -> do reverse on nihao)
+
+# Comparison Expression
+password gt "1234";
+1234 eq 1234;
+4321 ne 1234;
+var le var2;
