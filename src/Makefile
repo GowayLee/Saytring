@@ -55,4 +55,4 @@ clean:
 	rm -f $(TARGET) $(OBJS) parser.tab.cc parser.tab.h lexer.yy.cc
 
 dotest:
-	${BUILDDIR}/$(TARGET) ../test/1.say || ./$(TARGET) ../test/1.say
+	${BUILDDIR}/$(TARGET) ../test/good.say || ./$(TARGET) ../test/good.say

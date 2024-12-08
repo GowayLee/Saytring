@@ -1,10 +1,10 @@
 #ifndef _AST_H_
 #define _AST_H_
 
-#include "symtab.h"
 #include <iostream>
 #include <vector>
 #include "parser.tab.h"
+#include "symtab.h"
 
 class AST_Node {
 public:
@@ -38,10 +38,21 @@ public:
 /////////////// Identifier //////////////////
 class Identifier : public Expression {
 public:
-  Symbol *name;
-  Identifier(Symbol *name, YYLTYPE loc) : Expression(loc) { this->name = name; }
   Identifier(YYLTYPE loc) : Expression(loc) {}
+  virtual bool has_owner() = 0;
+  virtual Symbol *get_name() = 0;
+};
+
+class Single_Identifier : public Identifier {
+public:
+  Symbol *name;
+  Single_Identifier(Symbol *name, YYLTYPE loc) : Identifier(loc) {
+    this->name = name;
+  }
+
+  Single_Identifier(YYLTYPE loc) : Identifier(loc) {}
   bool has_owner() { return false; }
+  Symbol *get_name() { return name; }
 };
 
 class Owner_Identifier : public Identifier {
@@ -49,17 +60,20 @@ public:
   Symbol *owner_name;
   Symbol *name;
   Owner_Identifier(Symbol *owner_name, Symbol *name, YYLTYPE loc)
-      : Identifier(name, loc) {
+      : Identifier(loc) {
     this->owner_name = owner_name;
+    this->name = name;
   }
   bool has_owner() { return true; }
   Identifier *to_Identifier();
+  Symbol *get_name() { return name; }
 };
 
 class Nil_Identifier : public Identifier {
 public:
   Nil_Identifier(YYLTYPE loc) : Identifier(loc) {}
   bool has_owner() { return false; }
+  Symbol *get_name() { return NULL; }
 };
 
 /////////////// Declaration //////////////////
@@ -132,8 +146,8 @@ public:
     this->return_id = return_id;
   }
   void set_id(Identifier *id);
-  Symbol *get_id();
-  Symbol *get_return_name();
+  // Symbol *get_id();
+  // Symbol *get_return_name();
   void set_return_id(Identifier *return_id);
   bool is_cond_call() { return false; }
   // Infer default return_id

@@ -4,6 +4,7 @@
 #include <vector>
 #include "symtab.h"
 #include "AST.h"
+#include "util.h"
 
 extern char *curr_filename;
 
@@ -11,6 +12,7 @@ extern char *curr_filename;
 #define YYLTYPE_IS_DECLARED 1
 #define YYLTYPE_IS_TRIVIAL 1
 
+void warning(const char *s, YYLTYPE loc);
 void yyerror(const char *s, YYLTYPE loc);
 void yyerror(const char *s);
 
@@ -20,11 +22,11 @@ Program *ast_root;            /* the result of the parse  */
 int omerrs = 0;               /* number of errors in lexing and parsing */
 
 // Temp variables
-static std::vector<Expression *> *global_expr_list = new std::vector<Expression *>;
-static std::vector<Identifier *> *temp_identifier_list = new std::vector<Identifier *>;
-static std::vector<Call_Expr *> *temp_call_list = new std::vector<Call_Expr *>;
-static Identifier *temp_return_id;
-static Identifier *temp_owner;
+std::vector<Expression *> *global_expr_list = new std::vector<Expression *>;
+std::vector<Identifier *> *temp_identifier_list = new std::vector<Identifier *>;
+std::vector<Call_Expr *> *temp_call_list = new std::vector<Call_Expr *>;
+Identifier *temp_return_id;
+Identifier *temp_owner;
 
 %}
 
@@ -77,13 +79,11 @@ program : expr_list
 
 expr_list : expression
           {
-            $$ = global_expr_list;
-            $$->push_back($1);
+            global_expr_list->push_back($1);
           }
           | expr_list expression
           {
-            $$ = $1;
-            $$->push_back($2);
+            global_expr_list->push_back($2);
           }
           ;
 
@@ -92,6 +92,7 @@ expression : decl_expr        { $$ = $1; }
            | assi_expr        { $$ = $1; }
            | io_expr          { $$ = $1; }
            | cond_expr        { $$ = $1; }
+           | identifier       { $$ = $1; }
            | call_expr        ;
            | expression comp_op expression ';'
            {
@@ -122,7 +123,7 @@ expression : decl_expr        { $$ = $1; }
 
 identifier : ID
            {
-             $$ = new Identifier($1, @1);
+             $$ = new Single_Identifier($1, @1);
            }
            | ID BELONG ID
            {
@@ -139,13 +140,13 @@ decl_expr : DEFINE identifier AS '(' expression ')'
 property_decl_expr : identifier HAS '[' dummy_identifier_list ']'
                    {
                      if ($1->has_owner())
-                       yyerror("Warning: cannot declare property of a property!", yylloc);
+                       warning("Warning: cannot declare property of a property!", yylloc);
                      else {
                        for (Identifier *property_id : *temp_identifier_list) {
                          if (property_id->has_owner()) {
                            Owner_Identifier *oproperty_id = static_cast<Owner_Identifier *>(property_id);
-                           if (!(*(oproperty_id->owner_name) == *($1->name))) { // Different owner
-                             yyerror("Warning: cannot declare property with different owner!", yylloc);
+                           if (!(*(oproperty_id->owner_name) == *(static_cast<Single_Identifier *>($1)->name))) { // Different owner
+                             warning("Warning: cannot declare property with different owner!", yylloc);
                            } else { // Same owner
                              global_expr_list->push_back(new Property_Decl_Expr($1, oproperty_id->to_Identifier(), oproperty_id->location));
                            }
@@ -204,23 +205,24 @@ call_expr : identifier dummy_chain_call_list
           {
             Identifier *caller = $1;
             // dummy_chain_call_list collects call_expr in inverse order.
-            for (size_t i = temp_call_list->size() - 1; i >= 0; i--) {
-              Call_Expr *expr = temp_call_list->at(i);
+            // size_t i is unsigned 03:3803:38integer so there is no negative
+            for (size_t i = temp_call_list->size(); i > 0; i--) {
+              Call_Expr *expr = temp_call_list->at(i - 1);
               if (expr->is_cond_call()) { // This expr is an function call with condition
                 Cond_Call_Expr *cond_call_expr = static_cast<Cond_Call_Expr *>(expr);
                 Direct_Call_Expr *direct_expr = cond_call_expr->call_expr;
-                direct_expr->set_id(i == temp_call_list->size() - 1 ? caller : temp_return_id);
+                direct_expr->set_id(i == temp_call_list->size() ? caller : temp_return_id);
                 if (!direct_expr->adjust_return_id())
-                  yyerror("Warning: should not store result value in a property of another variable!", yylloc);
+                  warning("Warning: should not store result value in a property of another variable!", yylloc);
                 temp_return_id = direct_expr->return_id;
 
                 // Convert Cond_Call_Expr to Cond_Expr
                 global_expr_list->push_back(new Cond_Expr(cond_call_expr->predictor, direct_expr, cond_call_expr->location));
               } else {
                 Direct_Call_Expr *direct_expr = static_cast<Direct_Call_Expr *>(expr);
-                direct_expr->set_id(i == temp_call_list->size() - 1 ? caller : temp_return_id);
+                direct_expr->set_id(i == temp_call_list->size() ? caller : temp_return_id);
                 if (!direct_expr->adjust_return_id())
-                  yyerror("Warning: should not store result value in a property of another variable!", yylloc);
+                  warning("Warning: should not store result value in a property of another variable!", yylloc);
                 temp_return_id = direct_expr->return_id;
                 global_expr_list->push_back(direct_expr);
               }
@@ -237,7 +239,7 @@ dummy_chain_call_list : func_expr
                       {
                         temp_call_list->push_back($1);
                       }
-                      | '(' IF expression THEN func_expr ')' CHAIN
+                      | '(' IF expression THEN func_expr ')'
                       {
                         temp_call_list->clear();
                         temp_call_list->push_back(new Cond_Call_Expr($3, $5, @3));
@@ -255,19 +257,19 @@ dummy_chain_call_list : func_expr
 
 func_expr : DO identifier
           {
-            $$ = new Direct_Call_Expr($2, new std::vector<Expression *>, new Identifier(new Symbol("last_result"), @2), @2);
+            $$ = new Direct_Call_Expr($2, new std::vector<Expression *>, new Single_Identifier(new Symbol("last_result"), @2), @2);
           }
           | DO identifier USING '[' parameter_list ']'
           {
-            $$ = new Direct_Call_Expr($2, $5, new Identifier(new Symbol("last_result"), @2), @2);
+            $$ = new Direct_Call_Expr($2, $5, new Single_Identifier(new Symbol("last_result"), @2), @2);
           }
           | DO identifier ON identifier
           {
             $$ = new Direct_Call_Expr($2, new std::vector<Expression *>, $4, @2);
           }
-          | DO identifier ON identifier USING '[' parameter_list ']'
+          | DO identifier USING '[' parameter_list ']' ON identifier
           {
-            $$ = new Direct_Call_Expr($2, $7, $4, @2);
+            $$ = new Direct_Call_Expr($2, $5, $8, @2);
           }
           ;
 
@@ -321,14 +323,14 @@ io_expr : ASK expression AS identifier
         {
           std::vector<Expression *> *args = new std::vector<Expression *>;
           args->push_back($2);
-          Direct_Call_Expr *call_expr = new Direct_Call_Expr($4, new Identifier(new Symbol("ask"), @2), args, new Nil_Identifier(@2), @4);
+          Direct_Call_Expr *call_expr = new Direct_Call_Expr($4, new Single_Identifier(new Symbol("ask"), @2), args, new Nil_Identifier(@2), @4);
           call_expr->adjust_return_id(); // last_result is not a property of another variable
           $$ = call_expr;
         }
         | ASK AS identifier
         {
           std::vector<Expression *> *args = new std::vector<Expression *>;
-          Direct_Call_Expr *call_expr = new Direct_Call_Expr($3, new Identifier(new Symbol("ask"), @3), args, new Nil_Identifier(@2), @3);
+          Direct_Call_Expr *call_expr = new Direct_Call_Expr($3, new Single_Identifier(new Symbol("ask"), @3), args, new Nil_Identifier(@2), @3);
           call_expr->adjust_return_id(); // last_result is not a property of another variable
           $$ = call_expr;
         }
@@ -336,20 +338,27 @@ io_expr : ASK expression AS identifier
         {
           std::vector<Expression *> *args = new std::vector<Expression *>;
           args->push_back($3);
-          Direct_Call_Expr *call_expr = new Direct_Call_Expr(new Nil_Identifier(@3), new Identifier(new Symbol("say"), @3), args, new Nil_Identifier(@3), @3);
+          Direct_Call_Expr *call_expr = new Direct_Call_Expr(new Nil_Identifier(@3), new Single_Identifier(new Symbol("say"), @3), args, new Nil_Identifier(@3), @3);
           $$ = call_expr;
         }
         ;
 
 %%
 
+void warning(const char *s, YYLTYPE loc) {
+  std::cerr << curr_filename << ":" << loc.first_line << ":" << loc.first_column
+            << ": " << s;
+  std::cerr << std::endl;
+}
+
 void yyerror(const char *s) {
   yyerror(s, yylloc);
 }
 
 void yyerror(const char *s, YYLTYPE loc) {
-  std::cerr << "\"" << curr_filename << "\" :" << loc.first_line << ":" << loc.first_column
+  std::cerr << curr_filename << ":" << loc.first_line << ":" << loc.first_column
             << ": " << s << " at or near ";
+  print_token(yychar);
   std::cerr << std::endl;
   omerrs++;
 

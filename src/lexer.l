@@ -34,6 +34,8 @@ extern int yycolumn;
 
 int yycolumn = 1;
 
+// debug
+
 %}
 
 %option noyywrap

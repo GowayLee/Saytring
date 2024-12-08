@@ -195,6 +195,8 @@ chain_call_expr ::= chain_op func_expr
 
 > TODO: Add syntactic sugar
 
+> TODO: Fix syntax of arithmetic and comparion
+
 ### Syntactic Sugar
 
 Saytring emploies a great number of Syntactic Sugars to make its syntax familiar with natural language.
