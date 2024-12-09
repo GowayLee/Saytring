@@ -133,7 +133,7 @@ false                                                 {
   *  Number
   */
 {NUMBER}                                              {
-	yylval.symbol = new Symbol(yytext);
+	yylval.symbol = int_tab->add_string(yytext);
   return INT_CONST;
 }
 
@@ -141,7 +141,7 @@ false                                                 {
   *  Identifier
   */
 {ID}                                                  {
-  yylval.symbol = new Symbol(yytext);
+  yylval.symbol = id_tab->add_string(yytext);
   return ID;
 }
 
@@ -168,7 +168,7 @@ false                                                 {
 <NORMAL_STRING_CONST>"\""                             {
   *string_buf_ptr = '\0';
   BEGIN(INITIAL);
-	yylval.symbol = new Symbol(string_buf);
+	yylval.symbol = str_tab->add_string(string_buf);
 	return STR_CONST;
 }
 <NORMAL_STRING_CONST>[^\0]*\0                         {
