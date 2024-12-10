@@ -24,7 +24,7 @@ int omerrs = 0;               /* number of errors in lexing and parsing */
 // Temp variables
 bool has_pushed_back = false;
 std::vector<Expression *> *global_expr_list = new std::vector<Expression *>;
-std::vector<Identifier *> *temp_identifier_list = new std::vector<Identifier *>;
+std::vector<Symbol *> *temp_identifier_list = new std::vector<Symbol *>;
 std::vector<Call_Expr *> *temp_call_list = new std::vector<Call_Expr *>;
 Identifier *temp_return_id;
 
@@ -89,13 +89,13 @@ expr_list : expression
               global_expr_list->push_back($2);
             has_pushed_back = false;
           }
-                 ;
+          ;
 
-expression : decl_expr        { $$ = $1; }
-           | assi_expr        { $$ = $1; }
+expression : assi_expr        { $$ = $1; }
            | io_expr          { $$ = $1; }
            | cond_expr        { $$ = $1; }
            | identifier       { $$ = $1; }
+           | decl_expr          ;
            | property_decl_expr ;
            | call_expr          ;
            | expression comp_op expression ';'
@@ -135,9 +135,12 @@ identifier : ID
            }
            ;
 
-decl_expr : DEFINE identifier AS '(' expression ')'
-          {
-            $$ = new Var_Decl_Expr($2, $5, @2);
+decl_expr : DEFINE ID AS '(' expression ')'
+          {  
+            global_expr_list->push_back(new Var_Decl_Expr($2, $5, @2));
+            // Automatically declare var's last_result, as well
+            global_expr_list->push_back(new Property_Decl_Expr(new Single_Identifier($2, @2), id_tab->add_string("last_result"), @2));
+            has_pushed_back = true;
           }
           ;
 
@@ -146,29 +149,20 @@ property_decl_expr : identifier HAS '[' dummy_identifier_list ']'
                      if ($1->has_owner())
                        warning("Warning: cannot declare property of a property!", yylloc);
                      else {
-                       for (Identifier *property_id : *temp_identifier_list) {
-                         if (property_id->has_owner()) {
-                           Owner_Identifier *oproperty_id = static_cast<Owner_Identifier *>(property_id);
-                           if (!(*(oproperty_id->owner_name) == *(static_cast<Single_Identifier *>($1)->name))) { // Different owner
-                             warning("Warning: cannot declare property with different owner!", yylloc);
-                           } else { // Same owner
-                             global_expr_list->push_back(new Property_Decl_Expr($1, oproperty_id->to_Identifier(), oproperty_id->location));
-                           }
-                           continue;
-                         }
-                         global_expr_list->push_back(new Property_Decl_Expr($1, property_id, property_id->location));
+                       for (Symbol *property_name : *temp_identifier_list) {
+                         global_expr_list->push_back(new Property_Decl_Expr($1, property_name, yylloc));
                        }
                        has_pushed_back = true;
                      }
                    }
                    ;
               
-dummy_identifier_list : identifier
+dummy_identifier_list :ID 
                       {
                         temp_identifier_list->clear();
                         temp_identifier_list->push_back($1);
                       }    
-                      | identifier ',' dummy_identifier_list 
+                      | ID ',' dummy_identifier_list 
                       {
                         temp_identifier_list->push_back($1);
                       }
@@ -185,6 +179,7 @@ assi_expr : SET identifier AS '(' expression ')'
           }
           ;
 
+// Will collect parameters in inverse order
 parameter_list : expression
                {
                  $$ = new std::vector<Expression *>;
@@ -271,19 +266,19 @@ dummy_chain_call_list : func_expr
                       }
                       ;
 
-func_expr : DO identifier
+func_expr : DO ID
           {
-            $$ = new Direct_Call_Expr($2, new std::vector<Expression *>, new Single_Identifier(new Symbol("last_result"), @2), @2);
+            $$ = new Direct_Call_Expr($2, new std::vector<Expression *>, new Single_Identifier(id_tab->add_string("last_result"), @2), @2);
           }
-          | DO identifier USING '[' parameter_list ']'
+          | DO ID USING '[' parameter_list ']'
           {
-            $$ = new Direct_Call_Expr($2, $5, new Single_Identifier(new Symbol("last_result"), @2), @2);
+            $$ = new Direct_Call_Expr($2, $5, new Single_Identifier(id_tab->add_string("last_result"), @2), @2);
           }
-          | DO identifier ON identifier
+          | DO ID ON identifier
           {
             $$ = new Direct_Call_Expr($2, new std::vector<Expression *>, $4, @2);
           }
-          | DO identifier USING '[' parameter_list ']' ON identifier
+          | DO ID USING '[' parameter_list ']' ON identifier
           {
             $$ = new Direct_Call_Expr($2, $5, $8, @2);
           }
@@ -344,15 +339,13 @@ io_expr : ASK expression AS identifier
             args->push_back(temp_return_id);
             has_pushed_back = false;
           }
-          Direct_Call_Expr *call_expr = new Direct_Call_Expr($4, new Single_Identifier(new Symbol("ask"), @2), args, new Nil_Identifier(@2), @4);
-          call_expr->adjust_return_id(); // last_result is not a property of another variable
+          Direct_Call_Expr *call_expr = new Direct_Call_Expr(new Nil_Identifier(@2), id_tab->add_string("ask_with_prompt"), args, $4, @4);
           $$ = call_expr;
         }
         | ASK AS identifier
         {
           std::vector<Expression *> *args = new std::vector<Expression *>;
-          Direct_Call_Expr *call_expr = new Direct_Call_Expr($3, new Single_Identifier(new Symbol("ask"), @3), args, new Nil_Identifier(@2), @3);
-          call_expr->adjust_return_id(); // last_result is not a property of another variable
+          Direct_Call_Expr *call_expr = new Direct_Call_Expr(new Nil_Identifier(@2), id_tab->add_string("ask"), args, $3, @3);
           $$ = call_expr;
         }
         | SAY '(' expression ')'
@@ -364,7 +357,7 @@ io_expr : ASK expression AS identifier
             args->push_back(temp_return_id);
             has_pushed_back = false;
           }
-          Direct_Call_Expr *call_expr = new Direct_Call_Expr(new Nil_Identifier(@3), new Single_Identifier(new Symbol("say"), @3), args, new Nil_Identifier(@3), @3);
+          Direct_Call_Expr *call_expr = new Direct_Call_Expr(new Nil_Identifier(@3), id_tab->add_string("say"), args, new Nil_Identifier(@3), @3);
           $$ = call_expr;
         }
         ;

@@ -10,7 +10,7 @@ CXXINCLUDE = -I./include -I.
 CXXFLAGS = -Wno-write-strings -g ${CXXINCLUDE}
 BISONFLAGS = -d -y
 
-OBJS = main.o lexer.o parser.o AST.o symtab.o util.o
+OBJS = main.o lexer.o parser.o AST.o symtab.o util.o semant.o
 
 TARGET = my_parser
 
@@ -28,6 +28,9 @@ $(TARGET): $(OBJS)
 
 main.o: main.cc ${INCLUDEDIR}/AST.h parser.tab.h
 	$(CXX) $(CXXFLAGS) -c main.cc
+
+semant.o: semant.cc parser.tab.h ${INCLUDEDIR}/semant.h ${INCLUDEDIR}/AST.h ${INCLUDEDIR}/symtab.h
+	$(CXX) $(CXXFLAGS) -c semant.cc
 
 AST.o: AST.cc parser.tab.h ${INCLUDEDIR}/AST.h ${INCLUDEDIR}/symtab.h
 	$(CXX) $(CXXFLAGS) -c AST.cc
@@ -55,4 +58,4 @@ clean:
 	rm -f $(TARGET) $(OBJS) parser.tab.cc parser.tab.h lexer.yy.cc
 
 dotest:
-	${BUILDDIR}/$(TARGET) ../test/good.say || ./$(TARGET) ../test/good.say
+	${BUILDDIR}/$(TARGET) ../test/sin.say || ./$(TARGET) ../test/sin.say

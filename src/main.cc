@@ -1,11 +1,13 @@
 #include "AST.h"
 #include <cstdio>
-#include <iostream>
+
+char *curr_filename = "<stdin>";
+int semant_error_count = 0;
+int semant_warn_count = 0;
 
 extern int yylex();
 extern int yyparse();
 extern FILE *yyin;
-char *curr_filename = "<stdin>";
 extern int omerrs;        // a count of lex and parse errors
 extern Program *ast_root; // the AST produced by the parse
 
@@ -28,14 +30,25 @@ int main(int argc, char **argv) {
 
   // Syntax Parsing
   if (yyparse() != 0) {
-    printf("Parsing failed. Compilation terminate!\n");
-    return 1;
+    printf("Compilation terminated due to syntax errors;\n");
+    return 0;
   }
 
   printf("Parsing completed successfully!\n");
-//   std::cout << "ex:" << ast_root->expr_list->size() << std::endl;
+  //   std::cout << "ex:" << ast_root->expr_list->size() << std::endl;
 
   // Semant Check
+  ast_root->semant_check();
+
+  if (semant_warn_count > 0)
+    printf("Here exists %d warnings, they may cause unexpected behaviours.\n",
+           semant_warn_count);
+  if (semant_error_count > 0) {
+    printf("Compilation terminated due to %d semant errors;\n",
+           semant_error_count);
+    return 0;
+  }
+  printf("No semant error has been found!\n");
 
   if (inputFile != stdin) {
     fclose(inputFile);

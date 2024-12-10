@@ -21,6 +21,7 @@ Symbol *String_Tab::add_string(char *s) {
       return sym;
     }
   }
+  this->symtab->push_back(new_sym);
   return new_sym;
 }
 

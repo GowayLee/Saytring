@@ -22,17 +22,22 @@ public:
   Program(std::vector<Expression *> *expr, YYLTYPE loc) : AST_Node(loc) {
     this->expr_list = expr;
   }
+
+  void semant_check();
 };
 
 /////////////// Expression //////////////////
 class Expression : public AST_Node {
 public:
+  Symbol *type;
   Expression(YYLTYPE loc) : AST_Node(loc) {}
+  virtual void type_check() = 0;
 };
 
 class Nil_Expr : public Expression {
 public:
   Nil_Expr(YYLTYPE loc) : Expression(loc) {}
+  void type_check();
 };
 
 /////////////// Identifier //////////////////
@@ -40,7 +45,7 @@ class Identifier : public Expression {
 public:
   Identifier(YYLTYPE loc) : Expression(loc) {}
   virtual bool has_owner() = 0;
-  virtual Symbol *get_name() = 0;
+  virtual void type_check() = 0;
 };
 
 class Single_Identifier : public Identifier {
@@ -52,7 +57,7 @@ public:
 
   Single_Identifier(YYLTYPE loc) : Identifier(loc) {}
   bool has_owner() { return false; }
-  Symbol *get_name() { return name; }
+  void type_check();
 };
 
 class Owner_Identifier : public Identifier {
@@ -66,42 +71,44 @@ public:
   }
   bool has_owner() { return true; }
   Identifier *to_Identifier();
-  Symbol *get_name() { return name; }
+  void type_check();
 };
 
 class Nil_Identifier : public Identifier {
 public:
   Nil_Identifier(YYLTYPE loc) : Identifier(loc) {}
   bool has_owner() { return false; }
-  Symbol *get_name() { return NULL; }
+  void type_check();
 };
 
 /////////////// Declaration //////////////////
 class Decl_Expr : public Expression {
 public:
   Decl_Expr(YYLTYPE loc) : Expression(loc) {}
+  virtual void type_check() = 0;
 };
 
 class Var_Decl_Expr : public Decl_Expr {
 public:
-  Identifier *identifier;
+  Symbol *identifier;
   Expression *init;
-  Var_Decl_Expr(Identifier *id, Expression *init, YYLTYPE loc)
-      : Decl_Expr(loc) {
+  Var_Decl_Expr(Symbol *id, Expression *init, YYLTYPE loc) : Decl_Expr(loc) {
     this->identifier = id;
     this->init = init;
   }
+  void type_check();
 };
 
 class Property_Decl_Expr : public Decl_Expr {
 public:
   Identifier *owner_id;
-  Identifier *property_id;
-  Property_Decl_Expr(Identifier *owner_id, Identifier *property_id, YYLTYPE loc)
+  Symbol *property_name;
+  Property_Decl_Expr(Identifier *owner_id, Symbol *property_id, YYLTYPE loc)
       : Decl_Expr(loc) {
     this->owner_id = owner_id;
-    this->property_id = property_id;
+    this->property_name = property_id;
   }
+  void type_check();
 };
 
 /////////////// Assignment //////////////////
@@ -113,6 +120,7 @@ public:
     this->id = id;
     this->expr = expr;
   }
+  void type_check();
 };
 
 /////////////// Function Call //////////////////
@@ -120,15 +128,16 @@ class Call_Expr : public Expression {
 public:
   Call_Expr(YYLTYPE loc) : Expression(loc) {}
   virtual bool is_cond_call() = 0;
+  virtual void type_check() = 0;
 };
 
 class Direct_Call_Expr : public Call_Expr {
 public:
   Identifier *id;
-  Identifier *func_name;
+  Symbol *func_name;
   std::vector<Expression *> *arg_list;
   Identifier *return_id;
-  Direct_Call_Expr(Identifier *id, Identifier *func_name,
+  Direct_Call_Expr(Identifier *id, Symbol *func_name,
                    std::vector<Expression *> *arg_list, Identifier *return_id,
                    YYLTYPE loc)
       : Call_Expr(loc) {
@@ -138,7 +147,7 @@ public:
     this->return_id = return_id;
   }
 
-  Direct_Call_Expr(Identifier *func_name, std::vector<Expression *> *arg_list,
+  Direct_Call_Expr(Symbol *func_name, std::vector<Expression *> *arg_list,
                    Identifier *return_id, YYLTYPE loc)
       : Call_Expr(loc) {
     this->func_name = func_name;
@@ -152,6 +161,7 @@ public:
   bool is_cond_call() { return false; }
   // Infer default return_id
   bool adjust_return_id();
+  void type_check();
 };
 
 class Cond_Call_Expr : public Call_Expr {
@@ -159,7 +169,7 @@ public:
   Expression *predictor;
   Direct_Call_Expr *call_expr;
 
-  Cond_Call_Expr(Expression *pre, Identifier *id, Identifier *func_name,
+  Cond_Call_Expr(Expression *pre, Identifier *id, Symbol *func_name,
                  std::vector<Expression *> *arg_list, Identifier *return_id,
                  YYLTYPE loc)
       : Call_Expr(loc) {
@@ -168,7 +178,7 @@ public:
         new Direct_Call_Expr(id, func_name, arg_list, return_id, loc);
   }
 
-  Cond_Call_Expr(Expression *pre, Identifier *func_name,
+  Cond_Call_Expr(Expression *pre, Symbol *func_name,
                  std::vector<Expression *> *arg_list, Identifier *return_id,
                  YYLTYPE loc)
       : Call_Expr(loc) {
@@ -183,6 +193,7 @@ public:
   }
 
   bool is_cond_call() { return true; }
+  void type_check();
 };
 
 /////////////// Conditional //////////////////
@@ -205,6 +216,7 @@ public:
     this->then = then;
     this->_else = new Nil_Expr(loc);
   }
+  void type_check();
 };
 
 /////////////// Comparion //////////////////
@@ -219,6 +231,7 @@ public:
     this->op = op;
     this->e2 = e2;
   }
+  void type_check();
 };
 
 /////////////// Arithmetic //////////////////
@@ -233,6 +246,7 @@ public:
     this->op = op;
     this->e2 = e2;
   }
+  void type_check();
 };
 
 /////////////// Constant //////////////////
@@ -242,6 +256,7 @@ public:
   String_Const_Expr(Symbol *token, YYLTYPE loc) : Expression(loc) {
     this->token = token;
   }
+  void type_check();
 };
 
 class Int_Const_Expr : public Expression {
@@ -250,6 +265,7 @@ public:
   Int_Const_Expr(Symbol *token, YYLTYPE loc) : Expression(loc) {
     this->token = token;
   }
+  void type_check();
 };
 
 class Bool_Const_Expr : public Expression {
@@ -258,6 +274,7 @@ public:
   Bool_Const_Expr(bool value, YYLTYPE loc) : Expression(loc) {
     this->value = value;
   }
+  void type_check();
 };
 
 #endif

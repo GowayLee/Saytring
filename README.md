@@ -381,7 +381,7 @@ There are 5 types in Saytring:
 
   `E, F -> e : bool`
 
-- Result: `if e then T : T`
+- Result: `if e then T1 else T2 : NULL_Type`
 
 #### 6. Comparison
 

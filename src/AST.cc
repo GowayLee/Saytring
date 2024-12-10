@@ -14,13 +14,12 @@ void Direct_Call_Expr::set_return_id(Identifier *return_id) {
 /*
  *  Adjust return_id to property with owner.
  *  If detect owner is different with identifier who calls funcition, return
- * false. This function will make sure the return_id is a Owner_Identifier.
+ *  false. This function will make sure the return_id is a Owner_Identifier.
  */
 bool Direct_Call_Expr::adjust_return_id() {
-// Check whether is the same owner
+  // Check whether is the same owner
   // Both two id has owner
-  if (return_id->has_owner() && id->has_owner())
-  {
+  if (return_id->has_owner() && id->has_owner()) {
     return *(static_cast<Owner_Identifier *>(return_id)->owner_name) ==
            *(static_cast<Owner_Identifier *>(id)->owner_name);
   }

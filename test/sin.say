@@ -1,0 +1,17 @@
+define var as ("12345")
+define var2 as ("abcdef")
+define bool_var as (true)
+
+var has [sub_str, prop]
+
+var do substring_from_start using [var do get_length] on var's prop
+
+if 1 gt 3; then
+  say (var)
+else
+  ask "nihao" as var's prop
+endif
+
+say (var2)
+
+set var2 as (1 + var do get_length;)
