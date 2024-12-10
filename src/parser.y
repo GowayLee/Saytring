@@ -19,7 +19,6 @@ void yyerror(const char *s);
 extern int yylex();
 
 Program *ast_root;            /* the result of the parse  */
-int omerrs = 0;               /* number of errors in lexing and parsing */
 
 // Temp variables
 bool has_pushed_back = false;
@@ -79,6 +78,7 @@ program : expr_list
 
 expr_list : expression
           {
+            // If current expressions has been pushed back before, don't push it again
             if (!has_pushed_back)
               global_expr_list->push_back($1);
             has_pushed_back = false;
@@ -138,6 +138,7 @@ identifier : ID
 decl_expr : DEFINE ID AS '(' expression ')'
           {  
             global_expr_list->push_back(new Var_Decl_Expr($2, $5, @2));
+
             // Automatically declare var's last_result, as well
             global_expr_list->push_back(new Property_Decl_Expr(new Single_Identifier($2, @2), id_tab->add_string("last_result"), @2));
             has_pushed_back = true;
@@ -147,7 +148,7 @@ decl_expr : DEFINE ID AS '(' expression ')'
 property_decl_expr : identifier HAS '[' dummy_identifier_list ']'
                    {
                      if ($1->has_owner())
-                       warning("Warning: cannot declare property of a property!", yylloc);
+                       warning("Cannot declare property of a property!", yylloc);
                      else {
                        for (Symbol *property_name : *temp_identifier_list) {
                          global_expr_list->push_back(new Property_Decl_Expr($1, property_name, yylloc));
@@ -214,25 +215,36 @@ parameter_list : expression
 call_expr : identifier dummy_chain_call_list
           {
             Identifier *caller = $1;
+
             // dummy_chain_call_list collects call_expr in inverse order.
-            // size_t i is unsigned 03:3803:38integer so there is no negative
+            // size_t i is unsigned integer so there is no negative
             for (size_t i = temp_call_list->size(); i > 0; i--) {
               Call_Expr *expr = temp_call_list->at(i - 1);
               if (expr->is_cond_call()) { // This expr is an function call with condition
                 Cond_Call_Expr *cond_call_expr = static_cast<Cond_Call_Expr *>(expr);
                 Direct_Call_Expr *direct_expr = cond_call_expr->call_expr;
+
+                // Pass prev call's return_id to current call's id
                 direct_expr->set_id(i == temp_call_list->size() ? caller : temp_return_id);
+
+                // Check owner and property relationship
                 if (!direct_expr->adjust_return_id())
-                  warning("Warning: should not store result value in a property of another variable!", yylloc);
+                  warning("Should not store result value in a property of another variable!", yylloc);
+
+                // Continue pass down return_id
                 temp_return_id = direct_expr->return_id;
 
                 // Convert Cond_Call_Expr to Cond_Expr
                 global_expr_list->push_back(new Cond_Expr(cond_call_expr->predictor, direct_expr, cond_call_expr->location));
               } else {
                 Direct_Call_Expr *direct_expr = static_cast<Direct_Call_Expr *>(expr);
+
+                // Pass prev call's return_id to current call's id
                 direct_expr->set_id(i == temp_call_list->size() ? caller : temp_return_id);
+
+                // Check owner and property relationship
                 if (!direct_expr->adjust_return_id())
-                  warning("Warning: should not store result value in a property of another variable!", yylloc);
+                  warning("Should not store result value in a property of another variable!", yylloc);
                 temp_return_id = direct_expr->return_id;
                 global_expr_list->push_back(direct_expr);
               }
@@ -366,7 +378,7 @@ io_expr : ASK expression AS identifier
 
 void warning(const char *s, YYLTYPE loc) {
   std::cerr << curr_filename << ":" << loc.first_line << ":" << loc.first_column
-            << ": " << s;
+            << ": Warning: " << s;
   std::cerr << std::endl;
 }
 
@@ -379,10 +391,4 @@ void yyerror(const char *s, YYLTYPE loc) {
             << ": " << s << " at or near ";
   print_token(yychar);
   std::cerr << std::endl;
-  omerrs++;
-
-  if (omerrs > 50) {
-    fprintf(stdout, "More than 50 errors\n");
-    exit(1);
-  }
 }
