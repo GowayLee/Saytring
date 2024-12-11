@@ -82,6 +82,58 @@ static void init_basic_types() {
 
 void install_buildin_func() {
   std::vector<Symbol *> *arg_list;
+
+  // Type-cast Functions
+
+  // cast_null_to_str(NULL_Type) : string
+  arg_list = new std::vector<Symbol *>;
+  arg_list->push_back(NULL_Type);
+  arg_list->push_back(_string); // return_type
+  Env::func_map->insert(
+      std::make_pair(id_tab->add_string("cast_null_to_str"), arg_list));
+
+  // cast_null_to_int(NULL_Type) : int
+  arg_list = new std::vector<Symbol *>;
+  arg_list->push_back(NULL_Type);
+  arg_list->push_back(_int); // return_type
+  Env::func_map->insert(
+      std::make_pair(id_tab->add_string("cast_null_to_int"), arg_list));
+
+  // cast_null_to_bool(NULL_Type) : bool
+  arg_list = new std::vector<Symbol *>;
+  arg_list->push_back(NULL_Type);
+  arg_list->push_back(_bool); // return_type
+  Env::func_map->insert(
+      std::make_pair(id_tab->add_string("cast_null_to_bool"), arg_list));
+
+  // cast_str_to_bool(string) : bool
+  arg_list = new std::vector<Symbol *>;
+  arg_list->push_back(_string);
+  arg_list->push_back(_bool); // return_type
+  Env::func_map->insert(
+      std::make_pair(id_tab->add_string("cast_str_to_bool"), arg_list));
+
+  // cast_str_to_int(string) : int
+  arg_list = new std::vector<Symbol *>;
+  arg_list->push_back(_string);
+  arg_list->push_back(_int); // return_type
+  Env::func_map->insert(
+      std::make_pair(id_tab->add_string("cast_str_to_int"), arg_list));
+
+  // cast_int_to_bool(int) : bool
+  arg_list = new std::vector<Symbol *>;
+  arg_list->push_back(_int);
+  arg_list->push_back(_bool); // return_type
+  Env::func_map->insert(
+      std::make_pair(id_tab->add_string("cast_int_to_bool"), arg_list));
+
+  // cast_bool_to_int(bool) : int
+  arg_list = new std::vector<Symbol *>;
+  arg_list->push_back(_bool);
+  arg_list->push_back(_int); // return_type
+  Env::func_map->insert(
+      std::make_pair(id_tab->add_string("cast_bool_to_int"), arg_list));
+
   // concat(string, string) : string
   arg_list = new std::vector<Symbol *>;
   arg_list->push_back(_string);
