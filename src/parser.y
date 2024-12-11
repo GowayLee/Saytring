@@ -298,6 +298,10 @@ func_expr : DO ID
 
 cond_expr : IF expression THEN expression ELSE expression ENDIF
           {
+            $$ = new Cond_Expr($2, $4, $6, @2);
+          }
+          | IF expression THEN expression ENDIF
+          {
             $$ = new Cond_Expr($2, $4, @2);
           }
           ;
