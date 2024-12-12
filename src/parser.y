@@ -6,7 +6,7 @@
 #include "AST.h"
 #include "util.h"
 
-extern char *curr_filename;
+extern char *input_filename;
 
 // YYLTYPE is defined in AST.h
 #define YYLTYPE_IS_DECLARED 1
@@ -176,7 +176,12 @@ dummy_identifier_list :ID
 
 assi_expr : SET identifier AS '(' expression ')'
           {
-            $$ = new Assi_Expr($2, $5, @2);
+            if (!has_pushed_back)
+              $$ = new Assi_Expr($2, $5, @2);
+            else {
+              $$ = new Assi_Expr($2, temp_return_id, @2);
+              has_pushed_back = false;
+            }
           }
           ;
 
@@ -381,7 +386,7 @@ io_expr : ASK expression AS identifier
 %%
 
 void warning(const char *s, YYLTYPE loc) {
-  std::cerr << curr_filename << ":" << loc.first_line << ":" << loc.first_column
+  std::cerr << input_filename << ":" << loc.first_line << ":" << loc.first_column
             << ": Warning: " << s;
   std::cerr << std::endl;
 }
@@ -391,7 +396,7 @@ void yyerror(const char *s) {
 }
 
 void yyerror(const char *s, YYLTYPE loc) {
-  std::cerr << curr_filename << ":" << loc.first_line << ":" << loc.first_column
+  std::cerr << input_filename << ":" << loc.first_line << ":" << loc.first_column
             << ": " << s << " at or near ";
   print_token(yychar);
   std::cerr << std::endl;

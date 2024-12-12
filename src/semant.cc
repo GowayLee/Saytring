@@ -8,18 +8,18 @@
 #include <utility>
 #include <vector>
 
-extern char *curr_filename;
+extern char *input_filename;
 extern int semant_error_count;
 extern int semant_warn_count;
 
 std::ostream &semant_error(AST_Node *node) {
-  std::cerr << curr_filename << ":" << node->location.first_line << ":"
+  std::cerr << input_filename << ":" << node->location.first_line << ":"
             << node->location.first_column << ": Error: ";
   semant_error_count++;
   return std::cerr;
 }
 std::ostream &semant_warn(AST_Node *node) {
-  std::cerr << curr_filename << ":" << node->location.first_line << ":"
+  std::cerr << input_filename << ":" << node->location.first_line << ":"
             << node->location.first_column << ": Warning: ";
   semant_warn_count++;
   return std::cerr;
@@ -67,18 +67,8 @@ void Env::update_id_type_info(Owner_Identifier *id, Symbol *new_type) {
     it->second = new_type;
 }
 
-// Predefined symbols, basic types in Saytring
-static Symbol *_string, *_int, *_list, *_bool, *NULL_Type, *ERR_Type,
+extern Symbol *_string, *_int, *_list, *_bool, *NULL_Type, *ERR_Type,
     *LAST_RESULT;
-static void init_basic_types() {
-  _string = new Symbol("_string");
-  _int = new Symbol("_int");
-  _list = new Symbol("_list");
-  _bool = new Symbol("_bool");
-  NULL_Type = new Symbol("NULL_Type");
-  ERR_Type = new Symbol("ERR_Type");
-  LAST_RESULT = id_tab->add_string("last_result");
-}
 
 void install_buildin_func() {
   std::vector<Symbol *> *arg_list;
@@ -455,7 +445,6 @@ void Bool_Const_Expr::type_check() {
 
 void Program::semant_check() {
   // Set up predefined types
-  init_basic_types();
   install_buildin_func();
 
   // Do type-check

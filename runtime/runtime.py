@@ -174,7 +174,7 @@ def cast_null_to_bool(s: SaytringVar, t: SaytringVar) -> None:
     # Update _value
     result: bool
     if isinstance(s.get_value(), bool):
-        result = s.get_value
+        result = s.get_value()
     elif isinstance(s.get_value(), str):
         result = (
             s.get_value() == "True"

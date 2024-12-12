@@ -1,5 +1,6 @@
 #include "symtab.h"
 #include <cstring>
+#include <cwchar>
 
 Symbol::Symbol(char *s) {
   int len =
@@ -28,3 +29,9 @@ Symbol *String_Tab::add_string(char *s) {
 String_Tab *id_tab = new String_Tab();
 String_Tab *str_tab = new String_Tab();
 String_Tab *int_tab = new String_Tab();
+
+Symbol *_string = new Symbol("_string"), *_int = new Symbol("_int");
+Symbol *_list = new Symbol("_list"), *_bool = new Symbol("_bool");
+Symbol *NULL_Type = new Symbol("NULL_Type");
+Symbol *ERR_Type = new Symbol("ERR_Type");
+Symbol *LAST_RESULT = id_tab->add_string("last_result");

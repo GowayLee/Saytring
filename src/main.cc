@@ -1,14 +1,15 @@
 #include "AST.h"
 #include <cstdio>
 
-char *curr_filename = "<stdin>";
+char *input_filename = "<stdin>";
 int semant_error_count = 0;
 int semant_warn_count = 0;
+
+char *output_filename = "output.py";
 
 extern int yylex();
 extern int yyparse();
 extern FILE *yyin;
-extern int omerrs;        // a count of lex and parse errors
 extern Program *ast_root; // the AST produced by the parse
 
 int main(int argc, char **argv) {
@@ -16,7 +17,7 @@ int main(int argc, char **argv) {
 
   if (argc > 1) {
     inputFile = fopen(argv[1], "r");
-    curr_filename = argv[1];
+    input_filename = argv[1];
     if (!inputFile) {
       perror("Failed to open file");
       return 1;
@@ -35,7 +36,9 @@ int main(int argc, char **argv) {
   }
 
   printf("Parsing completed successfully!\n");
-  //   std::cout << "ex:" << ast_root->expr_list->size() << std::endl;
+  if (inputFile != stdin) {
+    fclose(inputFile);
+  }
 
   // Semant Check
   ast_root->semant_check();
@@ -50,9 +53,8 @@ int main(int argc, char **argv) {
   }
   printf("No semant error has been found!\n");
 
-  if (inputFile != stdin) {
-    fclose(inputFile);
-  }
+  // Code generation
+  ast_root->code_generation();
 
   return 0;
 }

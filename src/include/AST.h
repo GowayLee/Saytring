@@ -2,6 +2,7 @@
 #define _AST_H_
 
 #include <iostream>
+#include <sstream>
 #include <vector>
 #include "parser.tab.h"
 #include "symtab.h"
@@ -24,6 +25,7 @@ public:
   }
 
   void semant_check();
+  void code_generation();
 };
 
 /////////////// Expression //////////////////
@@ -32,12 +34,15 @@ public:
   Symbol *type;
   Expression(YYLTYPE loc) : AST_Node(loc) {}
   virtual void type_check() = 0;
+  void code_generate(std::ostringstream &generated_code);
+  virtual std::string code_generate() = 0;
 };
 
 class Nil_Expr : public Expression {
 public:
   Nil_Expr(YYLTYPE loc) : Expression(loc) {}
   void type_check();
+  std::string code_generate();
 };
 
 /////////////// Identifier //////////////////
@@ -45,7 +50,9 @@ class Identifier : public Expression {
 public:
   Identifier(YYLTYPE loc) : Expression(loc) {}
   virtual bool has_owner() = 0;
+  virtual bool is_nil() = 0;
   virtual void type_check() = 0;
+  virtual std::string code_generate() = 0;
 };
 
 class Single_Identifier : public Identifier {
@@ -57,7 +64,9 @@ public:
 
   Single_Identifier(YYLTYPE loc) : Identifier(loc) {}
   bool has_owner() { return false; }
+  bool is_nil() { return false; }
   void type_check();
+  std::string code_generate();
 };
 
 class Owner_Identifier : public Identifier {
@@ -70,15 +79,19 @@ public:
     this->name = name;
   }
   bool has_owner() { return true; }
+  bool is_nil() { return false; }
   Identifier *to_Identifier();
   void type_check();
+  std::string code_generate();
 };
 
 class Nil_Identifier : public Identifier {
 public:
   Nil_Identifier(YYLTYPE loc) : Identifier(loc) {}
   bool has_owner() { return false; }
+  bool is_nil() { return true; }
   void type_check();
+  std::string code_generate();
 };
 
 /////////////// Declaration //////////////////
@@ -86,6 +99,7 @@ class Decl_Expr : public Expression {
 public:
   Decl_Expr(YYLTYPE loc) : Expression(loc) {}
   virtual void type_check() = 0;
+  virtual std::string code_generate() = 0;
 };
 
 class Var_Decl_Expr : public Decl_Expr {
@@ -97,6 +111,7 @@ public:
     this->init = init;
   }
   void type_check();
+  std::string code_generate();
 };
 
 class Property_Decl_Expr : public Decl_Expr {
@@ -109,6 +124,7 @@ public:
     this->property_name = property_id;
   }
   void type_check();
+  std::string code_generate();
 };
 
 /////////////// Assignment //////////////////
@@ -121,6 +137,7 @@ public:
     this->expr = expr;
   }
   void type_check();
+  std::string code_generate();
 };
 
 /////////////// Function Call //////////////////
@@ -129,6 +146,7 @@ public:
   Call_Expr(YYLTYPE loc) : Expression(loc) {}
   virtual bool is_cond_call() = 0;
   virtual void type_check() = 0;
+  virtual std::string code_generate() = 0;
 };
 
 class Direct_Call_Expr : public Call_Expr {
@@ -162,6 +180,7 @@ public:
   // Infer default return_id
   bool adjust_return_id();
   void type_check();
+  std::string code_generate();
 };
 
 class Cond_Call_Expr : public Call_Expr {
@@ -194,6 +213,7 @@ public:
 
   bool is_cond_call() { return true; }
   void type_check();
+  std::string code_generate();
 };
 
 /////////////// Conditional //////////////////
@@ -202,12 +222,14 @@ public:
   Expression *predictor;
   Expression *then;
   Expression *_else;
+  bool has_else;
   Cond_Expr(Expression *predictor, Expression *then, Expression *_else,
             YYLTYPE loc)
       : Expression(loc) {
     this->predictor = predictor;
     this->then = then;
     this->_else = _else;
+    this->has_else = true;
   }
 
   Cond_Expr(Expression *predictor, Expression *then, YYLTYPE loc)
@@ -215,8 +237,10 @@ public:
     this->predictor = predictor;
     this->then = then;
     this->_else = new Nil_Expr(loc);
+    this->has_else = false;
   }
   void type_check();
+  std::string code_generate();
 };
 
 /////////////// Comparion //////////////////
@@ -232,6 +256,7 @@ public:
     this->e2 = e2;
   }
   void type_check();
+  std::string code_generate();
 };
 
 /////////////// Arithmetic //////////////////
@@ -247,6 +272,7 @@ public:
     this->e2 = e2;
   }
   void type_check();
+  std::string code_generate();
 };
 
 /////////////// Constant //////////////////
@@ -257,6 +283,7 @@ public:
     this->token = token;
   }
   void type_check();
+  std::string code_generate();
 };
 
 class Int_Const_Expr : public Expression {
@@ -266,6 +293,7 @@ public:
     this->token = token;
   }
   void type_check();
+  std::string code_generate();
 };
 
 class Bool_Const_Expr : public Expression {
@@ -275,6 +303,7 @@ public:
     this->value = value;
   }
   void type_check();
+  std::string code_generate();
 };
 
 #endif
