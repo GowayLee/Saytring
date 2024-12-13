@@ -5,6 +5,7 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <sstream>
 #include <string>
 #include <unordered_map>
@@ -13,6 +14,9 @@ extern char *output_filename;
 extern char *runtime_filename;
 extern Symbol *_string, *_int, *_list, *_bool, *NULL_Type, *ERR_Type,
     *LAST_RESULT;
+
+// from core_func.cc
+extern std::map<std::pair<Symbol *, Symbol *>, std::string> *type_cast_map;
 
 std::ostringstream generated_code;
 Code_Generator *cg = new Code_Generator();
@@ -124,26 +128,13 @@ std::string Cast_Expr::code_generate() {
 
   std::ostringstream buf;
   std::unordered_map<std::string, std::string> params;
+
   // Generate function name
-  if (id->type == NULL_Type) {
-    if (to_type == _string)
-      params["name"] = "cast_null_to_str";
-    else if (to_type == _int)
-      params["name"] = "cast_null_to_int";
-    else if (to_type == _bool)
-      params["name"] = "cast_null_to_bool";
-  } else if (id->type == _string) {
-    if (to_type == _int)
-      params["name"] = "cast_str_to_int";
-    else if (to_type == _bool)
-      params["name"] = "cast_str_to_bool";
-  } else if (id->type == _int) {
-    if (to_type == _bool)
-      params["name"] = "cast_int_to_bool";
-  } else if (id->type == _bool) {
-    if (to_type == _int)
-      params["name"] = "cast_bool_to_int";
-  }
+  auto it = type_cast_map->find(std::make_pair(id->type, to_type));
+  if (it == type_cast_map->end())
+    return ""; // Should never reach here
+  else
+    params["name"] = it->second;
 
   buf << id->code_generate() << ", " << return_id->code_generate();
   params["params"] = buf.str();
@@ -155,18 +146,21 @@ std::string Direct_Call_Expr::code_generate() {
 
   params["name"] = this->func_name->get_string();
 
+  // Need to reverse the list, since yacc has collected args in inverse order
   std::ostringstream arg_buf;
   arg_buf << this->id->code_generate();
+
+  int arg_size = arg_list->size();
   // Adjust ','
-  if (arg_list->size() > 0) {
+  if (arg_size > 0) {
     if (this->id->is_nil())
-      arg_buf << arg_list->at(0)->code_generate();
+      arg_buf << arg_list->at(arg_size - 1)->code_generate();
     else
-      arg_buf << ", " << arg_list->at(0)->code_generate();
+      arg_buf << ", " << arg_list->at(arg_size - 1)->code_generate();
   }
   // Append args
-  for (size_t i = 1; i < arg_list->size(); i++)
-    arg_buf << ", " << arg_list->at(i)->code_generate();
+  for (size_t i = arg_size - 1; i > 0; i--)
+    arg_buf << ", " << arg_list->at(i - 1)->code_generate();
   // Append return_id
   if (!return_id->is_nil())
     arg_buf << ", ";

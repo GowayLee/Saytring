@@ -10,7 +10,7 @@ CXXINCLUDE = -I./include -I.
 CXXFLAGS = -Wno-write-strings -g ${CXXINCLUDE}
 BISONFLAGS = -d -y
 
-OBJS = main.o lexer.o parser.o AST.o symtab.o util.o semant.o cgen.o
+OBJS = main.o lexer.o parser.o AST.o symtab.o util.o semant.o cgen.o core_func.o
 
 TARGET = saytringc
 
@@ -29,11 +29,14 @@ $(TARGET): $(OBJS)
 main.o: main.cc ${INCLUDEDIR}/AST.h parser.tab.h
 	$(CXX) $(CXXFLAGS) -c main.cc
 
-cgen.o: cgen.cc ${INCLUDEDIR}/cgen.h ${INCLUDEDIR}/AST.h ${INCLUDEDIR}/symtab.h ${INCLUDEDIR}/template.h
+cgen.o: cgen.cc ${INCLUDEDIR}/cgen.h ${INCLUDEDIR}/core_func.h ${INCLUDEDIR}/AST.h ${INCLUDEDIR}/symtab.h ${INCLUDEDIR}/template.h
 	$(CXX) $(CXXFLAGS) -c cgen.cc
 
-semant.o: semant.cc parser.tab.h ${INCLUDEDIR}/semant.h ${INCLUDEDIR}/AST.h ${INCLUDEDIR}/symtab.h
+semant.o: semant.cc parser.tab.h ${INCLUDEDIR}/core_func.h ${INCLUDEDIR}/semant.h ${INCLUDEDIR}/AST.h ${INCLUDEDIR}/symtab.h
 	$(CXX) $(CXXFLAGS) -c semant.cc
+
+core_func.o: core_func.cc ${INCLUDEDIR}/core_func.h ${INCLUDEDIR}/semant.h ${INCLUDEDIR}/symtab.h
+	$(CXX) $(CXXFLAGS) -c core_func.cc
 
 AST.o: AST.cc parser.tab.h ${INCLUDEDIR}/AST.h ${INCLUDEDIR}/symtab.h
 	$(CXX) $(CXXFLAGS) -c AST.cc

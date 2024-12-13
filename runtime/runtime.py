@@ -20,7 +20,7 @@ from enum import Enum
 from typing import Union, List, cast
 
 WARN_MSG_STRLEN = 10
-STEP_SKIP_MSG = "Runtime: Step skipped due to type casting error"
+STEP_SKIP_MSG = "Saytring: Step skipped due to type casting error"
 
 
 class DataType(Enum):

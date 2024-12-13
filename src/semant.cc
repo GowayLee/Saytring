@@ -1,17 +1,20 @@
 #include "semant.h"
 #include "AST.h"
+#include "core_func.h"
 #include "parser.tab.h"
 #include "symtab.h"
-#include <cmath>
 #include <cstddef>
 #include <iostream>
 #include <map>
 #include <utility>
 #include <vector>
 
-extern char *input_filename;
+extern char *input_filename; // from main.cc
 extern int semant_error_count;
 extern int semant_warn_count;
+
+// from core_func.cc
+extern std::map<std::pair<Symbol *, Symbol *>, std::string> *type_cast_map;
 
 std::ostream &semant_error(AST_Node *node) {
   std::cerr << input_filename << ":" << node->location.first_line << ":"
@@ -66,147 +69,6 @@ void Env::update_id_type_info(Owner_Identifier *id, Symbol *new_type) {
     Env::property_map->insert(std::make_pair(new_pair, new_type));
   else
     it->second = new_type;
-}
-
-void install_buildin_func() {
-  std::vector<Symbol *> *arg_list;
-
-  // Type-cast Functions
-  // cast_int_to_str(NULL_Type) : string
-  arg_list = new std::vector<Symbol *>;
-  arg_list->push_back(_int);
-  arg_list->push_back(_string); // return_type
-  Env::func_map->insert(
-      std::make_pair(id_tab->add_string("cast_int_to_str"), arg_list));
-
-  // cast_bool_to_str(NULL_Type) : string
-  arg_list = new std::vector<Symbol *>;
-  arg_list->push_back(_bool);
-  arg_list->push_back(_string); // return_type
-  Env::func_map->insert(
-      std::make_pair(id_tab->add_string("cast_bool_to_str"), arg_list));
-
-  // cast_list_to_str(NULL_Type) : string
-  arg_list = new std::vector<Symbol *>;
-  arg_list->push_back(_list);
-  arg_list->push_back(_string); // return_type
-  Env::func_map->insert(
-      std::make_pair(id_tab->add_string("cast_list_to_str"), arg_list));
-
-  // cast_null_to_str(NULL_Type) : string
-  arg_list = new std::vector<Symbol *>;
-  arg_list->push_back(NULL_Type);
-  arg_list->push_back(_string); // return_type
-  Env::func_map->insert(
-      std::make_pair(id_tab->add_string("cast_null_to_str"), arg_list));
-
-  // cast_null_to_int(NULL_Type) : int
-  arg_list = new std::vector<Symbol *>;
-  arg_list->push_back(NULL_Type);
-  arg_list->push_back(_int); // return_type
-  Env::func_map->insert(
-      std::make_pair(id_tab->add_string("cast_null_to_int"), arg_list));
-
-  // cast_null_to_bool(NULL_Type) : bool
-  arg_list = new std::vector<Symbol *>;
-  arg_list->push_back(NULL_Type);
-  arg_list->push_back(_bool); // return_type
-  Env::func_map->insert(
-      std::make_pair(id_tab->add_string("cast_null_to_bool"), arg_list));
-
-  // cast_str_to_bool(string) : bool
-  arg_list = new std::vector<Symbol *>;
-  arg_list->push_back(_string);
-  arg_list->push_back(_bool); // return_type
-  Env::func_map->insert(
-      std::make_pair(id_tab->add_string("cast_str_to_bool"), arg_list));
-
-  // cast_str_to_int(string) : int
-  arg_list = new std::vector<Symbol *>;
-  arg_list->push_back(_string);
-  arg_list->push_back(_int); // return_type
-  Env::func_map->insert(
-      std::make_pair(id_tab->add_string("cast_str_to_int"), arg_list));
-
-  // cast_int_to_bool(int) : bool
-  arg_list = new std::vector<Symbol *>;
-  arg_list->push_back(_int);
-  arg_list->push_back(_bool); // return_type
-  Env::func_map->insert(
-      std::make_pair(id_tab->add_string("cast_int_to_bool"), arg_list));
-
-  // cast_bool_to_int(bool) : int
-  arg_list = new std::vector<Symbol *>;
-  arg_list->push_back(_bool);
-  arg_list->push_back(_int); // return_type
-  Env::func_map->insert(
-      std::make_pair(id_tab->add_string("cast_bool_to_int"), arg_list));
-
-  // concat(string, string) : string
-  arg_list = new std::vector<Symbol *>;
-  arg_list->push_back(_string);
-  arg_list->push_back(_string);
-  arg_list->push_back(_string); // return_type
-  Env::func_map->insert(std::make_pair(id_tab->add_string("concat"), arg_list));
-
-  // substring(string, int, int) : string
-  arg_list = new std::vector<Symbol *>;
-  arg_list->push_back(_string);
-  arg_list->push_back(_int);
-  arg_list->push_back(_int);
-  arg_list->push_back(_string); // return_type
-  Env::func_map->insert(
-      std::make_pair(id_tab->add_string("substring"), arg_list));
-
-  // substring_from_start(string, int) : string  override
-  arg_list = new std::vector<Symbol *>;
-  arg_list->push_back(_string);
-  arg_list->push_back(_int);
-  arg_list->push_back(_string); // return_type
-  Env::func_map->insert(
-      std::make_pair(id_tab->add_string("substring_from_start"), arg_list));
-
-  // get_length(string) : int
-  arg_list = new std::vector<Symbol *>;
-  arg_list->push_back(_string);
-  arg_list->push_back(_int);
-  Env::func_map->insert(
-      std::make_pair(id_tab->add_string("get_length"), arg_list));
-
-  // reverse(string) : string
-  arg_list = new std::vector<Symbol *>;
-  arg_list->push_back(_string);
-  arg_list->push_back(_string); // return_type
-  Env::func_map->insert(
-      std::make_pair(id_tab->add_string("reverse"), arg_list));
-
-  // is_palindrome(string) : bool
-  arg_list = new std::vector<Symbol *>;
-  arg_list->push_back(_string);
-  arg_list->push_back(_bool); // return_type
-  Env::func_map->insert(
-      std::make_pair(id_tab->add_string("is_palindrome"), arg_list));
-
-  // say(NULL_Type, string) : NULL_Type
-  arg_list = new std::vector<Symbol *>;
-  arg_list->push_back(NULL_Type);
-  arg_list->push_back(_string);
-  arg_list->push_back(NULL_Type);
-  Env::func_map->insert(std::make_pair(id_tab->add_string("say"), arg_list));
-
-  // ask(NULL_Type) : NULL_Type
-  arg_list = new std::vector<Symbol *>;
-  arg_list->push_back(NULL_Type);
-  arg_list->push_back(NULL_Type);
-  Env::func_map->insert(std::make_pair(id_tab->add_string("ask"), arg_list));
-
-  // ask_with_prompt(NULL_Type, string) : NULL_Type
-  arg_list = new std::vector<Symbol *>;
-  arg_list->push_back(NULL_Type);
-  arg_list->push_back(_string);
-  arg_list->push_back(NULL_Type);
-  Env::func_map->insert(
-      std::make_pair(id_tab->add_string("ask_with_prompt"), arg_list));
 }
 
 /*-------------------------------.
@@ -324,8 +186,9 @@ Symbol *Cast_Expr::type_check() {
     return NULL_Type;
   }
 
-  // If dest type is list, report and return
-  if (to_type == _list || to_type == NULL_Type) {
+  // Check type pair in type_cast_map
+  auto it = type_cast_map->find(std::make_pair(id->type, to_type));
+  if (it == type_cast_map->end()) {
     semant_error(this) << "There is no cast for \"" << id->type->get_string()
                        << "\" -> \"" << to_type->get_string() << "\""
                        << std::endl;
@@ -468,6 +331,7 @@ Symbol *Bool_Const_Expr::type_check() { return _bool; }
 
 void Program::semant_check() {
   // Set up predefined types
+  install_type_cast_map();
   install_buildin_func();
 
   // Do type-check
