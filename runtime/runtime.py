@@ -77,6 +77,9 @@ class SaytringVar:
     def get_value(self) -> int | str | bool | List[str]:
         return self._value
 
+    def get_str_value(self) -> str:
+        return self._str_value
+
     def set_type(self, tp: DataType) -> None:
         self._type = tp
         # Update _str_value
@@ -126,6 +129,21 @@ class SaytringVar:
 ############################################
 ########### Type-cast Functions ############
 ############################################
+
+
+def cast_int_to_str(s: SaytringVar, t: SaytringVar) -> None:
+    s.set_value(s.get_str_value())
+    t.set_value(True)
+
+
+def cast_bool_to_str(s: SaytringVar, t: SaytringVar) -> None:
+    s.set_value(s.get_str_value())
+    t.set_value(True)
+
+
+def cast_list_to_str(s: SaytringVar, t: SaytringVar) -> None:
+    s.set_value(s.get_str_value())
+    t.set_value(True)
 
 
 def cast_null_to_str(s: SaytringVar, t: SaytringVar) -> None:
@@ -429,6 +447,7 @@ def ask_with_prompt(s: SaytringVar | str, t: SaytringVar) -> None:
     except TypeError:
         print(STEP_SKIP_MSG)
         return
+
 
 #####################################################################################
 #####################################################################################

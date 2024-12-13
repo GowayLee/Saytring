@@ -46,9 +46,9 @@ Identifier *temp_return_id;
 /* Declaration of terminals */
 %token CHAIN BELONG
 %token GT LT GE LE EQ NE
-%token DEFINE HAS SET AS IF THEN DO USING ON ELSE ENDIF
+%token DEFINE HAS SET AS IF THEN DO USING ON ELSE ENDIF CONVERT
 %token ASK SAY
-%token <symbol> STR_CONST INT_CONST
+%token <symbol> STR_CONST INT_CONST TYPE_CONST
 %token <bool_val> BOOL_CONST
 %token <symbol> ID
 %token ERROR
@@ -61,7 +61,7 @@ Identifier *temp_return_id;
 %type <expressions> expr_list parameter_list
 
 %type <expression> decl_expr property_decl_expr assi_expr io_expr cond_expr
-%type <expression> call_expr
+%type <expression> call_expr cast_expr
 %type <direct_call_expr> func_expr
 
 /* Precedence declaration */
@@ -95,6 +95,7 @@ expression : assi_expr        { $$ = $1; }
            | io_expr          { $$ = $1; }
            | cond_expr        { $$ = $1; }
            | identifier       { $$ = $1; }
+           | cast_expr        { $$ = $1; }
            | decl_expr          ;
            | property_decl_expr ;
            | call_expr          ;
@@ -184,6 +185,11 @@ assi_expr : SET identifier AS '(' expression ')'
             }
           }
           ;
+
+cast_expr : CONVERT identifier AS TYPE_CONST ON identifier
+          {
+            $$ = new Cast_Expr($2, $4, $6, @2);
+          }
 
 // Will collect parameters in inverse order
 parameter_list : expression

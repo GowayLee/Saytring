@@ -113,6 +113,29 @@ false                                                 {
 }
 
  /*
+  *  Type constants
+  */
+"string"                                              {
+  yylval.symbol = _string;
+  return TYPE_CONST;
+}
+
+"int"                                                 {
+  yylval.symbol = _int;
+  return TYPE_CONST;
+}
+
+"list"                                                {
+  yylval.symbol = _list;
+  return TYPE_CONST;
+}
+
+"bool"                                                {
+  yylval.symbol = _bool;
+  return TYPE_CONST;
+} 
+
+ /*
   *  Keyword
   */
 (?i:d)efine                                           return DEFINE;
@@ -120,6 +143,7 @@ false                                                 {
 (?i:a)sk                                              return ASK;
 (?i:s)et                                              return SET;
 (?i:s)ay                                              return SAY;
+(?i:c)onvert                                          return CONVERT;
 "as"                                                  return AS;
 "has"                                                 return HAS;
 "do"                                                  return DO;

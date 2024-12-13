@@ -107,22 +107,51 @@ std::string Property_Decl_Expr::code_generate() {
 }
 
 std::string Assi_Expr::code_generate() {
-  std::ostringstream buf;
   std::unordered_map<std::string, std::string> params;
 
-  buf.clear();
   params["id"] = this->id->code_generate();
   params["expr"] = this->expr->code_generate();
-  buf << cg->generate("assign", params);
-  return buf.str();
+  return cg->generate("assign", params);
+}
+
+std::string Cast_Expr::code_generate() {
+  // Generation nothing if dest type is NULL_Type
+  if (to_type == NULL_Type || to_type == _list)
+    return "";
+  // Generation nothing if source type = dest type
+  if (id->type == to_type)
+    return "";
+
+  std::ostringstream buf;
+  std::unordered_map<std::string, std::string> params;
+  // Generate function name
+  if (id->type == NULL_Type) {
+    if (to_type == _string)
+      params["name"] = "cast_null_to_str";
+    else if (to_type == _int)
+      params["name"] = "cast_null_to_int";
+    else if (to_type == _bool)
+      params["name"] = "cast_null_to_bool";
+  } else if (id->type == _string) {
+    if (to_type == _int)
+      params["name"] = "cast_str_to_int";
+    else if (to_type == _bool)
+      params["name"] = "cast_str_to_bool";
+  } else if (id->type == _int) {
+    if (to_type == _bool)
+      params["name"] = "cast_int_to_bool";
+  } else if (id->type == _bool) {
+    if (to_type == _int)
+      params["name"] = "cast_bool_to_int";
+  }
+
+  buf << id->code_generate() << ", " << return_id->code_generate();
+  params["params"] = buf.str();
+  return cg->generate("func_call", params);
 }
 
 std::string Direct_Call_Expr::code_generate() {
   std::unordered_map<std::string, std::string> params;
-  std::ostringstream buf;
-
-  params.clear();
-  buf.clear();
 
   params["name"] = this->func_name->get_string();
 
@@ -144,9 +173,7 @@ std::string Direct_Call_Expr::code_generate() {
   arg_buf << this->return_id->code_generate();
   params["params"] = arg_buf.str();
 
-  buf << cg->generate("func_call", params);
-
-  return buf.str();
+  return cg->generate("func_call", params);
 }
 
 std::string Cond_Call_Expr::code_generate() {

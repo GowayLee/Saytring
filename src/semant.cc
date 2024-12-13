@@ -3,6 +3,7 @@
 #include "parser.tab.h"
 #include "symtab.h"
 #include <cmath>
+#include <cstddef>
 #include <iostream>
 #include <map>
 #include <utility>
@@ -71,6 +72,26 @@ void install_buildin_func() {
   std::vector<Symbol *> *arg_list;
 
   // Type-cast Functions
+  // cast_int_to_str(NULL_Type) : string
+  arg_list = new std::vector<Symbol *>;
+  arg_list->push_back(_int);
+  arg_list->push_back(_string); // return_type
+  Env::func_map->insert(
+      std::make_pair(id_tab->add_string("cast_int_to_str"), arg_list));
+
+  // cast_bool_to_str(NULL_Type) : string
+  arg_list = new std::vector<Symbol *>;
+  arg_list->push_back(_bool);
+  arg_list->push_back(_string); // return_type
+  Env::func_map->insert(
+      std::make_pair(id_tab->add_string("cast_bool_to_str"), arg_list));
+
+  // cast_list_to_str(NULL_Type) : string
+  arg_list = new std::vector<Symbol *>;
+  arg_list->push_back(_list);
+  arg_list->push_back(_string); // return_type
+  Env::func_map->insert(
+      std::make_pair(id_tab->add_string("cast_list_to_str"), arg_list));
 
   // cast_null_to_str(NULL_Type) : string
   arg_list = new std::vector<Symbol *>;
@@ -209,28 +230,26 @@ Symbol *Single_Identifier::type_check() {
 Symbol *Owner_Identifier::type_check() {
   Symbol *temp_type;
   if ((temp_type = Env::get_id_type(this)) == nullptr) {
-    semant_error(this) << "Undefined identifier \""
-                       << this->owner_name->get_string() << "\'s "
-                       << this->name->get_string() << "\"" << std::endl;
+    semant_error(this) << "Undefined identifier \"" << owner_name->get_string()
+                       << "\'s " << name->get_string() << "\"" << std::endl;
     return ERR_Type;
   }
   return temp_type;
 }
 
 Symbol *Var_Decl_Expr::type_check() {
-  if (Env::id_map->find(this->identifier) != Env::id_map->end())
+  if (Env::id_map->find(identifier) != Env::id_map->end())
     semant_warn(this) << "Duplicate declaration of variable \""
-                      << this->identifier->get_string() << "\"" << std::endl;
-  this->init->type_check();
-  if (this->init->type == ERR_Type)
+                      << identifier->get_string() << "\"" << std::endl;
+  init->type = init->type_check();
+  if (init->type == ERR_Type)
     return ERR_Type;
-  if (this->init->type == NULL_Type) {
+  if (init->type == NULL_Type) {
     semant_warn(this)
         << "Should not initialize a variable with NULL_Type value!"
         << std::endl;
-    return NULL_Type;
   }
-  Env::id_map->insert(std::make_pair(this->identifier, this->init->type));
+  Env::id_map->insert(std::make_pair(identifier, init->type));
   return NULL_Type;
 }
 
@@ -251,7 +270,7 @@ Symbol *Property_Decl_Expr::type_check() {
                       << single_owner_id->name->get_string() << "\'s "
                       << this->property_name->get_string() << "\"" << std::endl;
 
-  single_owner_id->type_check();
+  single_owner_id->type = single_owner_id->type_check();
   if (single_owner_id->type == ERR_Type)
     return ERR_Type;
   if (single_owner_id->type == NULL_Type)
@@ -263,14 +282,14 @@ Symbol *Property_Decl_Expr::type_check() {
 }
 
 Symbol *Assi_Expr::type_check() {
-  this->id->type_check();
-  if (this->id->type == ERR_Type)
+  id->type = id->type_check();
+  if (id->type == ERR_Type)
     return ERR_Type;
 
-  this->expr->type_check();
-  if (this->expr->type == ERR_Type)
+  expr->type = expr->type_check();
+  if (expr->type == ERR_Type)
     return ERR_Type;
-  if (this->expr->type == NULL_Type)
+  if (expr->type == NULL_Type)
     semant_warn(this) << "Should not assign a variable with NULL_Type value!"
                       << std::endl;
 
@@ -291,20 +310,46 @@ Symbol *Assi_Expr::type_check() {
   return NULL_Type;
 }
 
-Symbol *Direct_Call_Expr::type_check() {
-  this->id->type_check();
-  if (this->id->type == ERR_Type)
+Symbol *Cast_Expr::type_check() {
+  id->type = id->type_check();
+  if (id->type == ERR_Type)
     return ERR_Type;
-  this->return_id->type_check();
-  if (this->id->type == ERR_Type)
+  return_id->type_check();
+  if (id->type == ERR_Type)
+    return ERR_Type;
+
+  if (id->type == to_type) {
+    semant_warn(this) << "Try to perform type casting between two same types."
+                      << std::endl;
+    return NULL_Type;
+  }
+
+  // If dest type is list, report and return
+  if (to_type == _list || to_type == NULL_Type) {
+    semant_error(this) << "There is no cast for \"" << id->type->get_string()
+                       << "\" -> \"" << to_type->get_string() << "\""
+                       << std::endl;
+    return ERR_Type;
+  }
+
+  Env::update_id_type_info(id, to_type);
+  Env::update_id_type_info(return_id, _bool);
+  return NULL_Type;
+}
+
+Symbol *Direct_Call_Expr::type_check() {
+  id->type = id->type_check();
+  if (id->type == ERR_Type)
+    return ERR_Type;
+  return_id->type = return_id->type_check();
+  if (id->type == ERR_Type)
     return ERR_Type;
 
   // Check function
-  auto it = Env::func_map->find(this->func_name);
+  auto it = Env::func_map->find(func_name);
   if (it == Env::func_map->end()) {
-    semant_error(this) << "Undefined function \""
-                       << this->func_name->get_string() << "\" is called!"
-                       << std::endl;
+    semant_error(this) << "Undefined function \"" << func_name->get_string()
+                       << "\" is called!" << std::endl;
     return ERR_Type;
   }
   std::vector<Symbol *> *func_arg_list = it->second;
@@ -317,30 +362,31 @@ Symbol *Direct_Call_Expr::type_check() {
   // func_arg_list contain return_type. So -2
   if (func_arg_list_size - 2 > actual_arg_list_size) {
     semant_error(this) << "Missing args for function \""
-                       << this->func_name->get_string() << "\", require "
+                       << func_name->get_string() << "\", require "
                        << func_arg_list->size() - 2 << " args!" << std::endl;
     return ERR_Type;
   } else if (func_arg_list_size - 2 < actual_arg_list_size) {
     semant_error(this) << "Too more args for function \""
-                       << this->func_name->get_string() << "\", require "
+                       << func_name->get_string() << "\", require "
                        << func_arg_list->size() - 2 << " args!" << std::endl;
     return ERR_Type;
   }
   // Check type
   // First check function caller, which is at the back of actual_arg_list
-  this->id->type_check();
-  if (this->id->type == ERR_Type)
+  id->type = id->type_check();
+  if (id->type == ERR_Type)
     return ERR_Type;
-  if (func_arg_list->at(0) != this->id->type)
+  if (func_arg_list->at(0) != id->type)
     semant_warn(this) << "The variable calling function does not match proper "
                          "type! Required: \""
                       << func_arg_list->at(0)->get_string() << "\", Actual \""
-                      << this->id->type->get_string() << "\"" << std::endl;
+                      << id->type->get_string() << "\"" << std::endl;
   // Then check rest args
   for (size_t i = 1; i < func_arg_list_size - 1; i++) {
     Symbol *func_arg_type = func_arg_list->at(i);
     // Arguments are collected in inverse order
-    arg_list->at(actual_arg_list_size - i)->type_check();
+    Expression *cur_arg = arg_list->at(actual_arg_list_size - i);
+    cur_arg->type = cur_arg->type_check();
     Symbol *actual_arg_type = arg_list->at(actual_arg_list_size - i)->type;
     if (actual_arg_type == ERR_Type)
       return ERR_Type;
@@ -349,8 +395,8 @@ Symbol *Direct_Call_Expr::type_check() {
           << "Should never pass a NULL_Type variable as parameter."
           << std::endl;
     if (actual_arg_type != func_arg_type)
-      semant_warn(this) << "Calling function \""
-                        << this->func_name->get_string() << "\", the " << i
+      semant_warn(this) << "Calling function \"" << func_name->get_string()
+                        << "\", the " << i
                         << "th arg is different with the required! Required: \""
                         << func_arg_type->get_string() << "\", Actual: \""
                         << actual_arg_type->get_string() << "\"" << std::endl;
@@ -369,7 +415,7 @@ Symbol *Cond_Call_Expr::type_check() {
 
 Symbol *Cond_Expr::type_check() {
   // Do type-check for Predictor
-  predictor->type_check();
+  predictor->type = predictor->type_check();
   if (predictor->type == ERR_Type)
     return ERR_Type;
   if (predictor->type != _bool)
@@ -380,8 +426,8 @@ Symbol *Cond_Expr::type_check() {
 }
 
 Symbol *Comp_Expr::type_check() {
-  this->e1->type_check();
-  this->e2->type_check();
+  e1->type = e1->type_check();
+  e2->type = e2->type_check();
 
   if (e1->type == ERR_Type || e2->type == ERR_Type)
     return ERR_Type;
@@ -398,8 +444,8 @@ Symbol *Comp_Expr::type_check() {
 }
 
 Symbol *Arith_Expr::type_check() {
-  this->e1->type_check();
-  this->e2->type_check();
+  e1->type = e1->type_check();
+  e2->type = e2->type_check();
 
   if (e1->type == ERR_Type || e2->type == ERR_Type)
     return ERR_Type;
