@@ -33,7 +33,7 @@ class Expression : public AST_Node {
 public:
   Symbol *type;
   Expression(YYLTYPE loc) : AST_Node(loc) {}
-  virtual void type_check() = 0;
+  virtual Symbol *type_check() = 0;
   void code_generate(std::ostringstream &generated_code);
   virtual std::string code_generate() = 0;
 };
@@ -41,7 +41,7 @@ public:
 class Nil_Expr : public Expression {
 public:
   Nil_Expr(YYLTYPE loc) : Expression(loc) {}
-  void type_check();
+  Symbol *type_check();
   std::string code_generate();
 };
 
@@ -51,7 +51,7 @@ public:
   Identifier(YYLTYPE loc) : Expression(loc) {}
   virtual bool has_owner() = 0;
   virtual bool is_nil() = 0;
-  virtual void type_check() = 0;
+  virtual Symbol *type_check() = 0;
   virtual std::string code_generate() = 0;
 };
 
@@ -65,7 +65,7 @@ public:
   Single_Identifier(YYLTYPE loc) : Identifier(loc) {}
   bool has_owner() { return false; }
   bool is_nil() { return false; }
-  void type_check();
+  Symbol *type_check();
   std::string code_generate();
 };
 
@@ -81,7 +81,7 @@ public:
   bool has_owner() { return true; }
   bool is_nil() { return false; }
   Identifier *to_Identifier();
-  void type_check();
+  Symbol *type_check();
   std::string code_generate();
 };
 
@@ -90,7 +90,7 @@ public:
   Nil_Identifier(YYLTYPE loc) : Identifier(loc) {}
   bool has_owner() { return false; }
   bool is_nil() { return true; }
-  void type_check();
+  Symbol *type_check();
   std::string code_generate();
 };
 
@@ -98,7 +98,7 @@ public:
 class Decl_Expr : public Expression {
 public:
   Decl_Expr(YYLTYPE loc) : Expression(loc) {}
-  virtual void type_check() = 0;
+  virtual Symbol *type_check() = 0;
   virtual std::string code_generate() = 0;
 };
 
@@ -110,7 +110,7 @@ public:
     this->identifier = id;
     this->init = init;
   }
-  void type_check();
+  Symbol *type_check();
   std::string code_generate();
 };
 
@@ -123,7 +123,7 @@ public:
     this->owner_id = owner_id;
     this->property_name = property_id;
   }
-  void type_check();
+  Symbol *type_check();
   std::string code_generate();
 };
 
@@ -136,7 +136,23 @@ public:
     this->id = id;
     this->expr = expr;
   }
-  void type_check();
+  Symbol *type_check();
+  std::string code_generate();
+};
+
+/////////////// Type-casting //////////////////
+class Cast_Expr : public Expression {
+public:
+  Identifier *id;
+  Symbol *to_type;
+  Identifier *return_id;
+  Cast_Expr(Identifier *id, Symbol *type, Identifier *return_id, YYLTYPE loc)
+      : Expression(loc) {
+    this->id = id;
+    this->to_type = type;
+    this->return_id = return_id;
+  }
+  Symbol *type_check();
   std::string code_generate();
 };
 
@@ -145,7 +161,7 @@ class Call_Expr : public Expression {
 public:
   Call_Expr(YYLTYPE loc) : Expression(loc) {}
   virtual bool is_cond_call() = 0;
-  virtual void type_check() = 0;
+  virtual Symbol *type_check() = 0;
   virtual std::string code_generate() = 0;
 };
 
@@ -179,7 +195,7 @@ public:
   bool is_cond_call() { return false; }
   // Infer default return_id
   bool adjust_return_id();
-  void type_check();
+  Symbol *type_check();
   std::string code_generate();
 };
 
@@ -212,7 +228,7 @@ public:
   }
 
   bool is_cond_call() { return true; }
-  void type_check();
+  Symbol *type_check();
   std::string code_generate();
 };
 
@@ -239,7 +255,7 @@ public:
     this->_else = new Nil_Expr(loc);
     this->has_else = false;
   }
-  void type_check();
+  Symbol *type_check();
   std::string code_generate();
 };
 
@@ -255,7 +271,7 @@ public:
     this->op = op;
     this->e2 = e2;
   }
-  void type_check();
+  Symbol *type_check();
   std::string code_generate();
 };
 
@@ -271,7 +287,7 @@ public:
     this->op = op;
     this->e2 = e2;
   }
-  void type_check();
+  Symbol *type_check();
   std::string code_generate();
 };
 
@@ -282,7 +298,7 @@ public:
   String_Const_Expr(Symbol *token, YYLTYPE loc) : Expression(loc) {
     this->token = token;
   }
-  void type_check();
+  Symbol *type_check();
   std::string code_generate();
 };
 
@@ -292,7 +308,7 @@ public:
   Int_Const_Expr(Symbol *token, YYLTYPE loc) : Expression(loc) {
     this->token = token;
   }
-  void type_check();
+  Symbol *type_check();
   std::string code_generate();
 };
 
@@ -302,7 +318,7 @@ public:
   Bool_Const_Expr(bool value, YYLTYPE loc) : Expression(loc) {
     this->value = value;
   }
-  void type_check();
+  Symbol *type_check();
   std::string code_generate();
 };
 

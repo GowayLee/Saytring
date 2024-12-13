@@ -30,8 +30,10 @@ String_Tab *id_tab = new String_Tab();
 String_Tab *str_tab = new String_Tab();
 String_Tab *int_tab = new String_Tab();
 
-Symbol *_string = new Symbol("_string"), *_int = new Symbol("_int");
-Symbol *_list = new Symbol("_list"), *_bool = new Symbol("_bool");
-Symbol *NULL_Type = new Symbol("NULL_Type");
-Symbol *ERR_Type = new Symbol("ERR_Type");
+Symbol *_string = id_tab->add_string("_string");
+Symbol *_int = id_tab->add_string("_int");
+Symbol *_list = id_tab->add_string("_list");
+Symbol *_bool = id_tab->add_string("_bool");
+Symbol *NULL_Type = id_tab->add_string("NULL_Type");
+Symbol *ERR_Type = id_tab->add_string("ERR_Type");
 Symbol *LAST_RESULT = id_tab->add_string("last_result");

@@ -67,9 +67,6 @@ void Env::update_id_type_info(Owner_Identifier *id, Symbol *new_type) {
     it->second = new_type;
 }
 
-extern Symbol *_string, *_int, *_list, *_bool, *NULL_Type, *ERR_Type,
-    *LAST_RESULT;
-
 void install_buildin_func() {
   std::vector<Symbol *> *arg_list;
 
@@ -195,57 +192,53 @@ void install_buildin_func() {
 |  type_check() implementation   |
 `-------------------------------*/
 
-void Nil_Expr::type_check() {
-  this->type = NULL_Type;
-  return;
-}
+Symbol *Nil_Expr::type_check() { return NULL_Type; }
 
-void Nil_Identifier::type_check() {
-  this->type = NULL_Type;
-  return;
-}
+Symbol *Nil_Identifier::type_check() { return NULL_Type; }
 
-void Single_Identifier::type_check() {
-  if ((this->type = Env::get_id_type(this)) == nullptr) {
+Symbol *Single_Identifier::type_check() {
+  Symbol *temp_type;
+  if ((temp_type = Env::get_id_type(this)) == nullptr) {
     semant_error(this) << "Undefined identifier \"" << this->name->get_string()
                        << "\"" << std::endl;
-    this->type = ERR_Type;
+    return ERR_Type;
   }
-  return;
+  return temp_type;
 }
 
-void Owner_Identifier::type_check() {
-  if ((this->type = Env::get_id_type(this)) == nullptr) {
+Symbol *Owner_Identifier::type_check() {
+  Symbol *temp_type;
+  if ((temp_type = Env::get_id_type(this)) == nullptr) {
     semant_error(this) << "Undefined identifier \""
                        << this->owner_name->get_string() << "\'s "
                        << this->name->get_string() << "\"" << std::endl;
-    this->type = ERR_Type;
+    return ERR_Type;
   }
-  return;
+  return temp_type;
 }
 
-void Var_Decl_Expr::type_check() {
+Symbol *Var_Decl_Expr::type_check() {
   if (Env::id_map->find(this->identifier) != Env::id_map->end())
     semant_warn(this) << "Duplicate declaration of variable \""
                       << this->identifier->get_string() << "\"" << std::endl;
   this->init->type_check();
   if (this->init->type == ERR_Type)
-    return;
+    return ERR_Type;
   if (this->init->type == NULL_Type) {
     semant_warn(this)
         << "Should not initialize a variable with NULL_Type value!"
         << std::endl;
-    return;
+    return NULL_Type;
   }
   Env::id_map->insert(std::make_pair(this->identifier, this->init->type));
-  return;
+  return NULL_Type;
 }
 
-void Property_Decl_Expr::type_check() {
+Symbol *Property_Decl_Expr::type_check() {
   if (this->owner_id->has_owner()) {
     semant_error(this) << "Cannot declare properties for a property!"
                        << std::endl;
-    return;
+    return ERR_Type;
   }
   // Do type-checking for owner
   Single_Identifier *single_owner_id =
@@ -260,23 +253,23 @@ void Property_Decl_Expr::type_check() {
 
   single_owner_id->type_check();
   if (single_owner_id->type == ERR_Type)
-    return;
+    return ERR_Type;
   if (single_owner_id->type == NULL_Type)
     semant_warn(this) << "Should not declare properties for NULL_Type variable!"
                       << std::endl;
   Env::property_map->insert(std::make_pair(
       std::make_pair(single_owner_id->name, property_name), NULL_Type));
-  return;
+  return NULL_Type;
 }
 
-void Assi_Expr::type_check() {
+Symbol *Assi_Expr::type_check() {
   this->id->type_check();
   if (this->id->type == ERR_Type)
-    return;
+    return ERR_Type;
 
   this->expr->type_check();
   if (this->expr->type == ERR_Type)
-    return;
+    return ERR_Type;
   if (this->expr->type == NULL_Type)
     semant_warn(this) << "Should not assign a variable with NULL_Type value!"
                       << std::endl;
@@ -295,16 +288,16 @@ void Assi_Expr::type_check() {
     Env::id_map->erase(Env::id_map->find(single_id->name));
     Env::id_map->insert(std::make_pair(single_id->name, expr->type));
   }
-  return;
+  return NULL_Type;
 }
 
-void Direct_Call_Expr::type_check() {
+Symbol *Direct_Call_Expr::type_check() {
   this->id->type_check();
   if (this->id->type == ERR_Type)
-    return;
+    return ERR_Type;
   this->return_id->type_check();
   if (this->id->type == ERR_Type)
-    return;
+    return ERR_Type;
 
   // Check function
   auto it = Env::func_map->find(this->func_name);
@@ -312,7 +305,7 @@ void Direct_Call_Expr::type_check() {
     semant_error(this) << "Undefined function \""
                        << this->func_name->get_string() << "\" is called!"
                        << std::endl;
-    return;
+    return ERR_Type;
   }
   std::vector<Symbol *> *func_arg_list = it->second;
 
@@ -326,18 +319,18 @@ void Direct_Call_Expr::type_check() {
     semant_error(this) << "Missing args for function \""
                        << this->func_name->get_string() << "\", require "
                        << func_arg_list->size() - 2 << " args!" << std::endl;
-    return;
+    return ERR_Type;
   } else if (func_arg_list_size - 2 < actual_arg_list_size) {
     semant_error(this) << "Too more args for function \""
                        << this->func_name->get_string() << "\", require "
                        << func_arg_list->size() - 2 << " args!" << std::endl;
-    return;
+    return ERR_Type;
   }
   // Check type
   // First check function caller, which is at the back of actual_arg_list
   this->id->type_check();
   if (this->id->type == ERR_Type)
-    return;
+    return ERR_Type;
   if (func_arg_list->at(0) != this->id->type)
     semant_warn(this) << "The variable calling function does not match proper "
                          "type! Required: \""
@@ -350,98 +343,82 @@ void Direct_Call_Expr::type_check() {
     arg_list->at(actual_arg_list_size - i)->type_check();
     Symbol *actual_arg_type = arg_list->at(actual_arg_list_size - i)->type;
     if (actual_arg_type == ERR_Type)
-      return;
+      return ERR_Type;
     if (actual_arg_type == NULL_Type)
       semant_warn(this)
           << "Should never pass a NULL_Type variable as parameter."
           << std::endl;
-    if (actual_arg_type != func_arg_type) {
+    if (actual_arg_type != func_arg_type)
       semant_warn(this) << "Calling function \""
                         << this->func_name->get_string() << "\", the " << i
                         << "th arg is different with the required! Required: \""
                         << func_arg_type->get_string() << "\", Actual: \""
                         << actual_arg_type->get_string() << "\"" << std::endl;
-      return;
-    }
   }
   // Update type information of return_id
   Env::update_id_type_info(return_id, func_arg_list->back());
-  this->type = func_arg_list->back();
-  return;
+  return func_arg_list->back();
 }
 
-void Cond_Call_Expr::type_check() {
+Symbol *Cond_Call_Expr::type_check() {
   semant_error(this)
       << "Here should not appear Type-checking for Cond_Call_Expr!"
       << std::endl;
-  return;
+  return ERR_Type;
 }
 
-void Cond_Expr::type_check() {
+Symbol *Cond_Expr::type_check() {
   // Do type-check for Predictor
   predictor->type_check();
   if (predictor->type == ERR_Type)
-    return;
-  if (predictor->type != _bool) {
+    return ERR_Type;
+  if (predictor->type != _bool)
     semant_warn(this) << "In IF-THEN-ELSE expression, predictor should be "
                          "bool type! Actual type: \""
                       << predictor->type->get_string() << "\"" << std::endl;
-    return;
-  }
-  this->type = NULL_Type;
-  return;
+  return NULL_Type;
 }
 
-void Comp_Expr::type_check() {
+Symbol *Comp_Expr::type_check() {
   this->e1->type_check();
   this->e2->type_check();
 
   if (e1->type == ERR_Type || e2->type == ERR_Type)
-    return;
+    return ERR_Type;
   if (e1->type == e2->type && (e1->type == _string || e1->type == _int))
-    this->type = _bool;
+    return _bool;
   else {
     semant_warn(this)
         << "In Comparison expression, compared expressions should all be "
            "string type or int type! Actual type: \""
         << e1->type->get_string() << "\" compare \"" << e2->type->get_string()
         << "\"" << std::endl;
-    this->type = ERR_Type;
+    return _bool;
   }
-  return;
 }
 
-void Arith_Expr::type_check() {
+Symbol *Arith_Expr::type_check() {
   this->e1->type_check();
   this->e2->type_check();
 
   if (e1->type == ERR_Type || e2->type == ERR_Type)
-    return;
+    return ERR_Type;
   if (e1->type == e2->type && e1->type == _int)
-    this->type = _int;
+    return _int;
   else {
     semant_warn(this) << "In Arithmetic expression, expressions should all be "
                          "int type! Actual type: \""
                       << e1->type->get_string() << "\" op \""
                       << e2->type->get_string() << std::endl;
+    return _int;
   }
-  return;
 }
 
-void String_Const_Expr::type_check() {
-  this->type = _string;
-  return;
-}
+Symbol *String_Const_Expr::type_check() { return _string; }
 
-void Int_Const_Expr::type_check() {
-  this->type = _int;
-  return;
-}
+Symbol *Int_Const_Expr::type_check() { return _int; }
 
-void Bool_Const_Expr::type_check() {
-  this->type = _bool;
-  return;
-}
+Symbol *Bool_Const_Expr::type_check() { return _bool; }
 
 void Program::semant_check() {
   // Set up predefined types
@@ -449,6 +426,6 @@ void Program::semant_check() {
 
   // Do type-check
   for (Expression *expr : *this->expr_list)
-    expr->type_check();
+    expr->type = expr->type_check();
   return;
 }
