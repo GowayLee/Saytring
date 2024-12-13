@@ -43,7 +43,7 @@ void Program::code_generation() {
   if (out_file.is_open()) {
     out_file.write(generated_code.str().c_str(), generated_code.str().size());
     out_file.close();
-    std::cout << "Code successfully written to " << output_filename
+    std::cout << "Generate code to " << output_filename
               << std::endl;
   } else {
     std::cerr << "Unable to open file: " << output_filename << std::endl;

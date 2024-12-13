@@ -1,4 +1,5 @@
 #include "AST.h"
+#include <chrono>
 #include <cstdio>
 #include <cstdlib>
 
@@ -15,8 +16,9 @@ extern FILE *yyin;
 extern Program *ast_root; // the AST produced by the parse
 
 int main(int argc, char **argv) {
-  FILE *inputFile;
+  auto start = std::chrono::high_resolution_clock::now();
 
+  FILE *inputFile;
   if (argc > 1) {
     inputFile = fopen(argv[1], "r");
     input_filename = argv[1];
@@ -37,16 +39,15 @@ int main(int argc, char **argv) {
     return 0;
   }
 
-  printf("Parsing completed successfully.\n");
-  if (inputFile != stdin) {
+  printf("No parsing error has been found.\n");
+  if (inputFile != stdin)
     fclose(inputFile);
-  }
 
   // Semant Check
   ast_root->semant_check();
 
   if (semant_warn_count > 0)
-    printf("Here exists %d warnings, they may cause unexpected behaviours.\n",
+    printf("%d warnings exist, they may cause unexpected behaviours.\n",
            semant_warn_count);
   if (semant_error_count > 0) {
     printf("Compilation terminated due to %d semant errors.\n",
@@ -58,7 +59,14 @@ int main(int argc, char **argv) {
   // Code generation
   ast_root->code_generation();
 
-  printf("\n--------Saytring based on Python--------\n");
+  std::cout << std::endl;
+  // Calculate compilation time
+  auto end = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> diff = end - start;
+  std::cout << "Compilation takes " << diff.count() << "s" << std::endl;
+
+  printf("Ready to go ヾ(≧▽≦*)o\n");
+  printf("\n--------Saytring v1.0.0--------\n");
   // Run code
   system("python output.py");
 

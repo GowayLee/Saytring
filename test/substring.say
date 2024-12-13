@@ -1,0 +1,17 @@
+define var as ("")
+define num1 as (0)
+define num2 as (0)
+
+ask "Enter a string: " as var
+convert var as string on var's last_result
+
+ask "Enter pos start: " as num1
+convert num1 as int on num1's last_result
+
+ask "Enter pos end: " as num2
+convert num2 as int on num2's last_result
+
+var has [substr]
+var do substring using [num1, num2] on substr
+define output as ("Substring is: ")
+say(output do concat using [var's substr])
