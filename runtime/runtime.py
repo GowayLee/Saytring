@@ -315,17 +315,17 @@ def comp(s1: SaytringVar | str | int, s2: SaytringVar | str | int, op: str) -> b
         )
         return False
 
-    if op == "eq":
+    if op == "EQ":
         return t1 == t2
-    if op == "ne":
+    if op == "NE":
         return t1 != t2
-    if op == "lt":
+    if op == "LT":
         return t1 < t2
-    if op == "le":
+    if op == "LE":
         return t1 <= t2
-    if op == "gt":
+    if op == "GT":
         return t1 > t2
-    if op == "ge":
+    if op == "GE":
         return t1 >= t2
 
     print("Saytring: Invalid operator, return False by default")
@@ -411,7 +411,7 @@ def is_palindrome(s: SaytringVar, t: SaytringVar) -> None:
         return
 
 
-def say(s: SaytringVar | str) -> None:
+def say(s: SaytringVar | str | int | bool) -> None:
     try:
         print(s.cast_str() if isinstance(s, SaytringVar) else s)
     except TypeError:
@@ -429,3 +429,6 @@ def ask_with_prompt(s: SaytringVar | str, t: SaytringVar) -> None:
     except TypeError:
         print(STEP_SKIP_MSG)
         return
+
+#####################################################################################
+#####################################################################################

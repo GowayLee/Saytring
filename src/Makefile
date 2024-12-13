@@ -12,7 +12,7 @@ BISONFLAGS = -d -y
 
 OBJS = main.o lexer.o parser.o AST.o symtab.o util.o semant.o cgen.o
 
-TARGET = my_parser
+TARGET = saytringc
 
 all: $(TARGET)
 

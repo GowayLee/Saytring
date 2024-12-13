@@ -1,11 +1,13 @@
 #include "AST.h"
 #include <cstdio>
+#include <cstdlib>
 
 char *input_filename = "<stdin>";
+char *output_filename = "output.py";
+char *runtime_filename = "../runtime/runtime.py";
+
 int semant_error_count = 0;
 int semant_warn_count = 0;
-
-char *output_filename = "output.py";
 
 extern int yylex();
 extern int yyparse();
@@ -31,11 +33,11 @@ int main(int argc, char **argv) {
 
   // Syntax Parsing
   if (yyparse() != 0) {
-    printf("Compilation terminated due to syntax errors;\n");
+    printf("Compilation terminated due to syntax errors.\n");
     return 0;
   }
 
-  printf("Parsing completed successfully!\n");
+  printf("Parsing completed successfully.\n");
   if (inputFile != stdin) {
     fclose(inputFile);
   }
@@ -47,14 +49,18 @@ int main(int argc, char **argv) {
     printf("Here exists %d warnings, they may cause unexpected behaviours.\n",
            semant_warn_count);
   if (semant_error_count > 0) {
-    printf("Compilation terminated due to %d semant errors;\n",
+    printf("Compilation terminated due to %d semant errors.\n",
            semant_error_count);
     return 0;
   }
-  printf("No semant error has been found!\n");
+  printf("No semant error has been found.\n");
 
   // Code generation
   ast_root->code_generation();
+
+  printf("\n--------Saytring based on Python--------\n");
+  // Run code
+  system("python output.py");
 
   return 0;
 }
