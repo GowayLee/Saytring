@@ -183,15 +183,12 @@ bool has_same_owner(Identifier *id1, Identifier *id2) {
   if (id1->has_owner() && id2->has_owner())
     return *(static_cast<Owner_Identifier *>(id1)->owner_name) ==
            *(static_cast<Owner_Identifier *>(id2)->owner_name);
-  // id1 has owner, compare id1's owner with id2
-  if (id1->has_owner())
-    return *(static_cast<Owner_Identifier *>(id1)->owner_name) ==
-           *(static_cast<Single_Identifier *>(id2)->name);
   // id2 has owner, compare id2's owner with id1
   if (id2->has_owner())
     return *(static_cast<Owner_Identifier *>(id2)->owner_name) ==
            *(static_cast<Single_Identifier *>(id1)->name);
-  // Both tow id does not have owner, return true
+
+  // id1 has owner or both tow id does not have owner, return true
   return true;
 }
 

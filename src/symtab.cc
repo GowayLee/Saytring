@@ -1,6 +1,5 @@
 #include "symtab.h"
 #include <cstring>
-#include <cwchar>
 
 Symbol::Symbol(char *s) {
   int len =

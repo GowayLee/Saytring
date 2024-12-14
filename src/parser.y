@@ -298,11 +298,11 @@ dummy_chain_call_list : func_expr
 
 func_expr : DO ID
           {
-            $$ = new Direct_Call_Expr($2, new std::vector<Expression *>, new Single_Identifier(id_tab->add_string("last_result"), @2), @2);
+            $$ = new Direct_Call_Expr($2, new std::vector<Expression *>, new Single_Identifier(LAST_RESULT , @2), @2);
           }
           | DO ID USING '[' parameter_list ']'
           {
-            $$ = new Direct_Call_Expr($2, $5, new Single_Identifier(id_tab->add_string("last_result"), @2), @2);
+            $$ = new Direct_Call_Expr($2, $5, new Single_Identifier(LAST_RESULT, @2), @2);
           }
           | DO ID ON identifier
           {

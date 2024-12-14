@@ -43,8 +43,7 @@ void Program::code_generation() {
   if (out_file.is_open()) {
     out_file.write(generated_code.str().c_str(), generated_code.str().size());
     out_file.close();
-    std::cout << "Generate code to " << output_filename
-              << std::endl;
+    std::cout << "Generate code to " << output_filename << std::endl;
   } else {
     std::cerr << "Unable to open file: " << output_filename << std::endl;
   }
@@ -158,9 +157,10 @@ std::string Direct_Call_Expr::code_generate() {
     else
       arg_buf << ", " << arg_list->at(arg_size - 1)->code_generate();
   }
-  // Append args
-  for (size_t i = arg_size - 1; i > 0; i--)
-    arg_buf << ", " << arg_list->at(i - 1)->code_generate();
+  // Append rest args
+  if (arg_size > 1)
+    for (size_t i = arg_size - 1; i > 0; i--)
+      arg_buf << ", " << arg_list->at(i - 1)->code_generate();
   // Append return_id
   if (!return_id->is_nil())
     arg_buf << ", ";
