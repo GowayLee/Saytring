@@ -1,0 +1,29 @@
+define text as ("  Hello, Saytring!  ")
+define result as ("")
+define msg as ("")
+define index as (0)
+
+# 测试 strip 函数
+set msg as ("Stripped: ")
+text do strip on text's result
+say(msg do concat using [text's result])
+
+# 测试 to_lower 函数
+set msg as ("Lowercase: ")
+text's result do to_lower on text's result
+say(msg do concat using [text's result])
+
+# 测试 to_upper 函数
+set msg as ("Uppercase: ")
+text's result do to_upper on text's result
+say(msg do concat using [text's result])
+
+# 测试 replace 函数
+set msg as ("Replaced: ")
+text's result do replace using ["HELLO", "Hi"] on text's result
+say(msg do concat using [text's result])
+
+# 测试 find 函数
+set msg as ("Index of 'Hi': ")
+text's result do find using ["Hi"] on text's index
+say(msg do concat using [text's index])

@@ -159,7 +159,7 @@ Symbol *Assi_Expr::type_check() {
   // Assert id exists in Env
   if (id->has_owner()) {
     Owner_Identifier *owner_id = static_cast<Owner_Identifier *>(id);
-    std::pair prop_pair = std::make_pair(owner_id->owner_name, owner_id->name);
+    auto prop_pair = std::make_pair(owner_id->owner_name, owner_id->name);
     // Delete previous type information
     Env::property_map->erase(Env::property_map->find(prop_pair));
     // Insert new type information

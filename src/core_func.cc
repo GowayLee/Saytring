@@ -164,4 +164,53 @@ void install_buildin_func() {
   arg_list->push_back(NULL_Type);
   Env::func_map->insert(
       std::make_pair(id_tab->add_string("ask_with_prompt"), arg_list));
+
+  // New String Functions
+  // strip(string) : string
+  arg_list = new std::vector<Symbol *>;
+  arg_list->push_back(_string);
+  arg_list->push_back(_string); // return_type
+  Env::func_map->insert(std::make_pair(id_tab->add_string("strip"), arg_list));
+
+  // replace(string, string, string) : string
+  arg_list = new std::vector<Symbol *>;
+  arg_list->push_back(_string);
+  arg_list->push_back(_string);
+  arg_list->push_back(_string);
+  arg_list->push_back(_string); // return_type
+  Env::func_map->insert(std::make_pair(id_tab->add_string("replace"), arg_list));
+
+  // to_upper(string) : string
+  arg_list = new std::vector<Symbol *>;
+  arg_list->push_back(_string);
+  arg_list->push_back(_string); // return_type
+  Env::func_map->insert(std::make_pair(id_tab->add_string("to_upper"), arg_list));
+
+  // to_lower(string) : string
+  arg_list = new std::vector<Symbol *>;
+  arg_list->push_back(_string);
+  arg_list->push_back(_string); // return_type
+  Env::func_map->insert(std::make_pair(id_tab->add_string("to_lower"), arg_list));
+
+  arg_list = new std::vector<Symbol *>;
+  arg_list->push_back(_string);
+  arg_list->push_back(_string);
+  arg_list->push_back(_int); // 返回类型
+  Env::func_map->insert(std::make_pair(id_tab->add_string("find"), arg_list));
+
+
+
+    // split(string, string) : list
+    arg_list = new std::vector<Symbol *>;
+    arg_list->push_back(_string);  // 第一个参数：输入字符串
+    arg_list->push_back(_string);  // 第二个参数：分隔符
+    arg_list->push_back(_list);    // 返回值：list[str]
+    Env::func_map->insert(std::make_pair(id_tab->add_string("split"), arg_list));
+
+    // get_at(list, int) : string
+    arg_list = new std::vector<Symbol *>;
+    arg_list->push_back(_list);
+    arg_list->push_back(_int);
+    arg_list->push_back(_string); // 返回类型
+    Env::func_map->insert(std::make_pair(id_tab->add_string("get_at"), arg_list));
 }

@@ -141,33 +141,41 @@ std::string Cast_Expr::code_generate() {
 }
 
 std::string Direct_Call_Expr::code_generate() {
-  std::unordered_map<std::string, std::string> params;
+    std::unordered_map<std::string, std::string> params;
+    params["name"] = this->func_name->get_string();
 
-  params["name"] = this->func_name->get_string();
+    std::ostringstream arg_buf;
+    bool has_args = false;
 
-  // Need to reverse the list, since yacc has collected args in inverse order
-  std::ostringstream arg_buf;
-  arg_buf << this->id->code_generate();
+    // 如果存在调用对象
+    if (!this->id->is_nil()) {
+        arg_buf << this->id->code_generate();
+        has_args = true;
+    }
 
-  int arg_size = arg_list->size();
-  // Adjust ','
-  if (arg_size > 0) {
-    if (this->id->is_nil())
-      arg_buf << arg_list->at(arg_size - 1)->code_generate();
-    else
-      arg_buf << ", " << arg_list->at(arg_size - 1)->code_generate();
-  }
-  // Append rest args
-  if (arg_size > 1)
-    for (size_t i = arg_size - 1; i > 0; i--)
-      arg_buf << ", " << arg_list->at(i - 1)->code_generate();
-  // Append return_id
-  if (!return_id->is_nil())
-    arg_buf << ", ";
-  arg_buf << this->return_id->code_generate();
-  params["params"] = arg_buf.str();
+    // 遍历参数列表
+    for (size_t i = 0; i < arg_list->size(); ++i) {
+        if (has_args) arg_buf << ", ";
 
-  return cg->generate("func_call", params);
+        // 判断参数类型
+        if (arg_list->at(i)->type == _list) {
+            // 如果是 LIST 类型，生成相应代码
+            arg_buf << "SaytringVar(" << arg_list->at(i)->code_generate() << ", DataType.LIST)";
+        } else {
+            // 普通类型
+            arg_buf << "SaytringVar(" << arg_list->at(i)->code_generate() << ", DataType.STRING)";
+        }
+        has_args = true;
+    }
+
+    // 添加返回值
+    if (!this->return_id->is_nil()) {
+        if (has_args) arg_buf << ", ";
+        arg_buf << this->return_id->code_generate();
+    }
+
+    params["params"] = arg_buf.str();
+    return cg->generate("func_call", params);
 }
 
 std::string Cond_Call_Expr::code_generate() {

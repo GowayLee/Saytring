@@ -138,10 +138,18 @@ identifier : ID
 
 decl_expr : DEFINE ID AS '(' expression ')'
           {  
+            // 定义变量
             global_expr_list->push_back(new Var_Decl_Expr($2, $5, @2));
 
-            // Automatically declare var's last_result, as well
+            // 自动声明该变量的属性 "last_result" (可选，根据需求保留)
             global_expr_list->push_back(new Property_Decl_Expr(new Single_Identifier($2, @2), id_tab->add_string("last_result"), @2));
+
+            // 自动声明 "result" 属性
+            global_expr_list->push_back(new Property_Decl_Expr(new Single_Identifier($2, @2), id_tab->add_string("result"), @2));
+
+            // 自动声明 "index" 属性
+            global_expr_list->push_back(new Property_Decl_Expr(new Single_Identifier($2, @2), id_tab->add_string("index"), @2));
+            global_expr_list->push_back(new Property_Decl_Expr(new Single_Identifier($2, @2), id_tab->add_string("result_list"), @2)); 
             has_pushed_back = true;
           }
           ;
@@ -195,13 +203,13 @@ cast_expr : CONVERT identifier TO TYPE_CONST ON identifier
             $$ = new Cast_Expr($2, $4, adjust_return_id($2), @2);
           }
 
-// Will collect parameters in inverse order
+// Will collect parameters in forward order
 parameter_list : expression
                {
                  $$ = new std::vector<Expression *>;
-                 if (!has_pushed_back)
+                 if (!has_pushed_back) {
                    $$->push_back($1);
-                 else {
+                 } else {
                    $$->push_back(temp_return_id);
                    has_pushed_back = false;
                  }
@@ -209,20 +217,20 @@ parameter_list : expression
                | expression ',' parameter_list
                {
                  $$ = $3;
-                 if (!has_pushed_back)
+                 if (!has_pushed_back) {
                    $$->push_back($1);
-                 else {
+                 } else {
                    $$->push_back(temp_return_id);
                    has_pushed_back = false;
                  }
                }
-               | error ','
+               | error
                {
                  yyerror("Error in parameter list", yylloc);
                  yyerrok;
+                 $$ = new std::vector<Expression *>;
                }
                ;
-
  /*
   * Call_expr, as well as parse Chain call
   * Convert chain_call into plain call expressions
@@ -298,11 +306,13 @@ dummy_chain_call_list : func_expr
 
 func_expr : DO ID
           {
-            $$ = new Direct_Call_Expr($2, new std::vector<Expression *>, new Single_Identifier(LAST_RESULT , @2), @2);
+            $$ = new Direct_Call_Expr($2, new std::vector<Expression *>, 
+                  new Single_Identifier(LAST_RESULT , @2), @2);
           }
           | DO ID USING '[' parameter_list ']'
           {
-            $$ = new Direct_Call_Expr($2, $5, new Single_Identifier(LAST_RESULT, @2), @2);
+            $$ = new Direct_Call_Expr($2, $5, 
+                  new Single_Identifier(LAST_RESULT, @2), @2);
           }
           | DO ID ON identifier
           {
@@ -312,6 +322,11 @@ func_expr : DO ID
           {
             $$ = new Direct_Call_Expr($2, $5, $8, @2);
           }
+          | DO ID USING STR_CONST ON identifier
+          | DO ID USING STR_CONST
+          | DO ID USING '[' parameter_list ']' ON identifier
+          | DO ID USING '[' parameter_list ']'
+          ;
           ;
 
 cond_expr : IF expression THEN expression ELSE expression ENDIF

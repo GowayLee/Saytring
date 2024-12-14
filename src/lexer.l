@@ -153,6 +153,8 @@ false                                                 {
 "else"                                                return ELSE;
 "endif"                                               return ENDIF;
 "to"                                                  return TO;
+"["                                                   return '[';
+"]"                                                   return ']';
 
  /*
   *  Number
