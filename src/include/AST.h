@@ -80,7 +80,6 @@ public:
   }
   bool has_owner() { return true; }
   bool is_nil() { return false; }
-  Identifier *to_Identifier();
   Symbol *type_check();
   std::string code_generate();
 };
@@ -188,13 +187,10 @@ public:
     this->arg_list = arg_list;
     this->return_id = return_id;
   }
-  void set_id(Identifier *id);
   // Symbol *get_id();
   // Symbol *get_return_name();
-  void set_return_id(Identifier *return_id);
   bool is_cond_call() { return false; }
   // Infer default return_id
-  bool adjust_return_id();
   Symbol *type_check();
   std::string code_generate();
 };

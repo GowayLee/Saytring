@@ -10,7 +10,7 @@ CXXINCLUDE = -I./include -I.
 CXXFLAGS = -Wno-write-strings -g ${CXXINCLUDE}
 BISONFLAGS = -d -y
 
-OBJS = main.o lexer.o parser.o AST.o symtab.o util.o semant.o cgen.o core_func.o
+OBJS = main.o lexer.o parser.o symtab.o util.o semant.o cgen.o core_func.o
 
 TARGET = saytringc
 
@@ -37,9 +37,6 @@ semant.o: semant.cc parser.tab.h ${INCLUDEDIR}/core_func.h ${INCLUDEDIR}/semant.
 
 core_func.o: core_func.cc ${INCLUDEDIR}/core_func.h ${INCLUDEDIR}/semant.h ${INCLUDEDIR}/symtab.h
 	$(CXX) $(CXXFLAGS) -c core_func.cc
-
-AST.o: AST.cc parser.tab.h ${INCLUDEDIR}/AST.h ${INCLUDEDIR}/symtab.h
-	$(CXX) $(CXXFLAGS) -c AST.cc
 
 symtab.o: symtab.cc ${INCLUDEDIR}/symtab.h
 	$(CXX) $(CXXFLAGS) -c symtab.cc

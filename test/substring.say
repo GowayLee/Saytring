@@ -3,13 +3,13 @@ define num1 as (0)
 define num2 as (0)
 
 ask "Enter a string: " as var
-convert var as string on var's last_result
+convert var to string
 
 ask "Enter pos start: " as num1
-convert num1 as int on num1's last_result
+convert num1 to int
 
 ask "Enter pos end: " as num2
-convert num2 as int on num2's last_result
+convert num2 to int
 
 var has [substr]
 var do substring using [num1, num2] on substr

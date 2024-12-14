@@ -1,5 +1,10 @@
 #include "util.h"
+#include "AST.h"
 #include "parser.tab.h"
+#include "symtab.h"
+#include <ctype.h>
+#include <iomanip>
+#include <iostream>
 
 char *token_to_string(int tok) {
   switch (tok) {
@@ -170,5 +175,48 @@ void print_token(int tok) {
     cerr << " = ";
     print_escaped_string(cerr, yylval.error_msg);
     break;
+  }
+}
+
+bool has_same_owner(Identifier *id1, Identifier *id2) {
+  // Both two id has owner
+  if (id1->has_owner() && id2->has_owner())
+    return *(static_cast<Owner_Identifier *>(id1)->owner_name) ==
+           *(static_cast<Owner_Identifier *>(id2)->owner_name);
+  // id1 has owner, compare id1's owner with id2
+  if (id1->has_owner())
+    return *(static_cast<Owner_Identifier *>(id1)->owner_name) ==
+           *(static_cast<Single_Identifier *>(id2)->name);
+  // id2 has owner, compare id2's owner with id1
+  if (id2->has_owner())
+    return *(static_cast<Owner_Identifier *>(id2)->owner_name) ==
+           *(static_cast<Single_Identifier *>(id1)->name);
+  // Both tow id does not have owner, return true
+  return true;
+}
+
+Owner_Identifier *adjust_return_id(Identifier *id1, Identifier *id2) {
+  if (id2->has_owner())
+    return static_cast<Owner_Identifier *>(id2);
+  if (id1->has_owner())
+    return new Owner_Identifier(
+        static_cast<Owner_Identifier *>(id1)->owner_name,
+        static_cast<Single_Identifier *>(id2)->name, id2->location);
+  else
+    return new Owner_Identifier(static_cast<Single_Identifier *>(id1)->name,
+                                static_cast<Single_Identifier *>(id2)->name,
+                                id2->location);
+}
+
+Owner_Identifier *adjust_return_id(Identifier *id) {
+  // Input var -> output var's last_result
+  // Input var's prop1 -> output var's last_result
+  if (id->has_owner()) {
+    auto *owner_id = static_cast<Owner_Identifier *>(id);
+    return new Owner_Identifier(owner_id->owner_name, LAST_RESULT,
+                                owner_id->location);
+  } else {
+    auto *sing_id = static_cast<Single_Identifier *>(id);
+    return new Owner_Identifier(sing_id->name, LAST_RESULT, sing_id->location);
   }
 }

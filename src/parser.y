@@ -46,7 +46,7 @@ Identifier *temp_return_id;
 /* Declaration of terminals */
 %token CHAIN BELONG
 %token GT LT GE LE EQ NE
-%token DEFINE HAS SET AS IF THEN DO USING ON ELSE ENDIF CONVERT
+%token DEFINE HAS SET AS IF THEN DO USING ON ELSE ENDIF CONVERT TO
 %token ASK SAY
 %token <symbol> STR_CONST INT_CONST TYPE_CONST
 %token <bool_val> BOOL_CONST
@@ -186,9 +186,13 @@ assi_expr : SET identifier AS '(' expression ')'
           }
           ;
 
-cast_expr : CONVERT identifier AS TYPE_CONST ON identifier
+cast_expr : CONVERT identifier TO TYPE_CONST ON identifier
           {
             $$ = new Cast_Expr($2, $4, $6, @2);
+          }
+          | CONVERT identifier TO TYPE_CONST
+          {
+            $$ = new Cast_Expr($2, $4, adjust_return_id($2), @2);
           }
 
 // Will collect parameters in inverse order
@@ -236,12 +240,13 @@ call_expr : identifier dummy_chain_call_list
                 Direct_Call_Expr *direct_expr = cond_call_expr->call_expr;
 
                 // Pass prev call's return_id to current call's id
-                direct_expr->set_id(i == temp_call_list->size() ? caller : temp_return_id);
+                direct_expr->id = (i == temp_call_list->size() ? caller : temp_return_id);
 
                 // Check owner and property relationship
-                if (!direct_expr->adjust_return_id())
+                if (!has_same_owner(direct_expr->id, direct_expr->return_id))
                   warning("Should not store result value in a property of another variable!", yylloc);
 
+                direct_expr->return_id = adjust_return_id(direct_expr->id, direct_expr->return_id);
                 // Continue pass down return_id
                 temp_return_id = direct_expr->return_id;
 
@@ -251,11 +256,13 @@ call_expr : identifier dummy_chain_call_list
                 Direct_Call_Expr *direct_expr = static_cast<Direct_Call_Expr *>(expr);
 
                 // Pass prev call's return_id to current call's id
-                direct_expr->set_id(i == temp_call_list->size() ? caller : temp_return_id);
+                direct_expr->id = (i == temp_call_list->size() ? caller : temp_return_id);
 
                 // Check owner and property relationship
-                if (!direct_expr->adjust_return_id())
+                if (!has_same_owner(direct_expr->id, direct_expr->return_id))
                   warning("Should not store result value in a property of another variable!", yylloc);
+
+                direct_expr->return_id = adjust_return_id(direct_expr->id, direct_expr->return_id);
                 temp_return_id = direct_expr->return_id;
                 global_expr_list->push_back(direct_expr);
               }

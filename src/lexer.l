@@ -152,6 +152,7 @@ false                                                 {
 "then"                                                return THEN;
 "else"                                                return ELSE;
 "endif"                                               return ENDIF;
+"to"                                                  return TO;
 
  /*
   *  Number
