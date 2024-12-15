@@ -101,11 +101,21 @@ expression : assi_expr        { $$ = $1; }
            | call_expr          ;
            | expression comp_op expression ';'
            {
-             $$ = new Comp_Expr($1, $2, $3, @1);
+             if (!has_pushed_back)
+               $$ = new Comp_Expr($1, $2, $3, @1);
+             else {
+               $$ = new Comp_Expr($1, $2, temp_return_id, @1);
+               has_pushed_back = false;
+             }
            }
            | expression arith_op expression ';'
            {
-             $$ = new Arith_Expr($1, $2, $3, @1);
+             if (!has_pushed_back)
+               $$ = new Arith_Expr($1, $2, $3, @1);
+             else {
+               $$ = new Arith_Expr($1, $2, temp_return_id, @1);
+               has_pushed_back = false;
+             }
            }
            | INT_CONST
            {
