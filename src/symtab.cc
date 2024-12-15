@@ -36,3 +36,12 @@ Symbol *_bool = id_tab->add_string("_bool");
 Symbol *NULL_Type = id_tab->add_string("NULL_Type");
 Symbol *ERR_Type = id_tab->add_string("ERR_Type");
 Symbol *LAST_RESULT = id_tab->add_string("last_result");
+
+Symbol *_ADD = new Symbol("ADD");
+Symbol *_SUB = new Symbol("SUB");
+Symbol *_GT = new Symbol("GT");
+Symbol *_LT = new Symbol("LT");
+Symbol *_GE = new Symbol("GE");
+Symbol *_LE = new Symbol("LE");
+Symbol *_EQ = new Symbol("EQ");
+Symbol *_NE = new Symbol("NE");

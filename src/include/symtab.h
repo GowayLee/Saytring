@@ -34,4 +34,6 @@ extern String_Tab *int_tab;
 extern Symbol *_string, *_int, *_list, *_bool, *NULL_Type, *ERR_Type,
     *LAST_RESULT;
 
+extern Symbol *_ADD, *_SUB, *_GT, *_LT, *_GE, *_LE, *_EQ, *_NE;
+
 #endif

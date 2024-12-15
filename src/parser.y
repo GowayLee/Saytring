@@ -341,37 +341,37 @@ cond_expr : IF expression THEN expression ELSE expression ENDIF
 
 comp_op : GT
         {
-          $$ = new Symbol("GT");
+          $$ = _GT;
         }
         | LT
         {
-          $$ = new Symbol("LT");
+          $$ = _LT;
         }
         | GE
         {
-          $$ = new Symbol("GE");
+          $$ = _GE;
         }
         | LE
         {
-          $$ = new Symbol("LE");
+          $$ = _LE;
         }
         | EQ
         {
-          $$ = new Symbol("EQ");
+          $$ = _EQ;
         }
         | NE
         {
-          $$ = new Symbol("NE");
+          $$ = _NE;
         }
         ;
 
 arith_op : '+'
          {
-           $$ = new Symbol("ADD");
+           $$ = _ADD;
          }
          | '-'
          {
-           $$ = new Symbol("SUB");
+           $$ = _SUB;
          }
          ;
 
