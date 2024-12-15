@@ -34,34 +34,29 @@ class DataType(Enum):
 # Warp Class for variables in Saytring
 class SaytringVar:
     # Default value leads to an instance with NULL_Type and ""
-    def __init__(self, value: Union[int, str, bool, List[str]] = "", tp: DataType = DataType.NULL_TYPE):
+    def __init__(
+        self,
+        value: Union[int, str, bool, List[str]] = "",
+        tp: DataType = DataType.NULL_TYPE,
+    ):
         self._value = value
         self._type: DataType = tp
-        if self._type == DataType.LIST and not isinstance(value, list):
-            self._value = []  # 初始化为一个空列表
         self._str_value: str = self._to_string()
 
     def _to_string(self) -> str:
-        """
-        根据变量类型返回字符串表示
-        """
         if self._type == DataType.INT:
             return str(self._value)
         if self._type == DataType.STRING:
-            return self._value
+            return cast(str, self._value)
         if self._type == DataType.BOOL:
             return "True" if self._value else "False"
-        if self._type == DataType.LIST:  # 对列表的处理
-            # 确保所有元素都转换为字符串
+        if self._type == DataType.LIST:
             return "[" + ", ".join(map(str, self._value)) + "]"
         if self._type == DataType.NULL_TYPE:
             return "None"
-        return "None"  # 应该不会到达这里
+        return "None"  # Should never reach here
 
     def set_value(self, value: Union[int, str, bool, list[str]]):
-        """
-        设置值并自动更新类型
-        """
         if isinstance(value, int):
             self._type = DataType.INT
         elif isinstance(value, str):
@@ -69,12 +64,12 @@ class SaytringVar:
         elif isinstance(value, bool):
             self._type = DataType.BOOL
         elif isinstance(value, list):
-            self._type = DataType.LIST  # 更新类型为列表
+            self._type = DataType.LIST
         else:
             raise TypeError(f"Unsupported value type: {type(value)}")
 
         self._value = value
-        self._str_value = self._to_string()  # 更新字符串表示
+        self._str_value = self._to_string()
 
     def set_NULL_value(self, value: Union[int, str, bool, List[str]]):
         self._type = DataType.NULL_TYPE
@@ -83,13 +78,6 @@ class SaytringVar:
 
     def get_value(self) -> int | str | bool | List[str]:
         return self._value
-
-    # 其他部分省略
-    def __str__(self):
-        return self._str_value
-
-    def __repr__(self):
-        return f"SaytringVar({self._str_value}, {self._type.name})"
 
     def get_str_value(self) -> str:
         return self._str_value
@@ -364,23 +352,54 @@ def comp(s1: SaytringVar | str | int, s2: SaytringVar | str | int, op: str) -> b
     return False
 
 
-def arithmetic(s1: SaytringVar | int, s2: SaytringVar | int, op: str) -> int:
-    try:
-        t1: int = s1 if isinstance(s1, int) else s1.cast_int()
-        t2: int = s2 if isinstance(s2, int) else s2.cast_int()
-    except TypeError:
-        print(
-            "Saytring: Try to perform arithmetic operation on non-int variables, return 0 by default"
-        )
-        print(STEP_SKIP_MSG)
+def arithmetic(
+    s1: SaytringVar | int | str, s2: SaytringVar | int | str, op: str
+) -> int | str:
+    # Process strings
+    if (
+        isinstance(s1, str)
+        or (isinstance(s1, SaytringVar) and s1.get_type() is DataType.STRING)
+    ) and (
+        isinstance(s2, str)
+        or (isinstance(s2, SaytringVar) and s2.get_type() is DataType.STRING)
+    ):
+        if op == "ADD":
+            return _concat(s1, s2)
+        if op == "SUB":
+            return _remove_tail(s1, s2)
+
+        print("Saytring: Invalid operator for string operation")
+        return ""
+
+    # Process numbers
+    if (
+        isinstance(s1, int)
+        or (isinstance(s1, SaytringVar) and s1.get_type() is DataType.INT)
+    ) and (
+        isinstance(s2, int)
+        or (isinstance(s2, SaytringVar) and s2.get_type() is DataType.INT)
+    ):
+        try:
+            t1: int = s1 if isinstance(s1, int) else s1.cast_int()
+            t2: int = s2 if isinstance(s2, int) else s2.cast_int()
+        except TypeError:
+            print(
+                "Saytring: Try to perform arithmetic operation on non-int variables, return 0 by default"
+            )
+            print(STEP_SKIP_MSG)
+            return 0
+
+        if op == "-":
+            return t1 - t2
+        if op == "+":
+            return t1 + t2
+
+        print("Saytring: Invalid operator, return 0 by default")
         return 0
 
-    if op == "-":
-        return t1 - t2
-    if op == "+":
-        return t1 + t2
-
-    print("Saytring: Invalid operator, return 0 by default")
+    # Mixed types
+    print("Saytring: Cannot perform arithmetic operation between int and string")
+    print(STEP_SKIP_MSG)
     return 0
 
 
@@ -394,25 +413,34 @@ def reverse(s: SaytringVar, t: SaytringVar) -> None:
     t.set_value(s.cast_str()[::-1])
 
 
-def concat(s1: SaytringVar, s2: SaytringVar, t: SaytringVar) -> None:
+def concat(s1: SaytringVar, s2: SaytringVar | str, t: SaytringVar) -> None:
     try:
-        # 获取 s1 的字符串值
-        s1_str = s1.cast_str()
+        t.set_value(s1.cast_str() + (s2 if isinstance(s2, str) else s2.cast_str()))
+    except TypeError:
+        print(STEP_SKIP_MSG)
 
-        # 判断 s2 的类型并处理
-        if s2.get_type() == DataType.LIST:
-            # 如果 s2 是 LIST 类型，将列表转换为字符串
-            s2_str = "[" + ", ".join(s2.cast_list()) + "]"
-        else:
-            # 如果是普通类型，直接转换为字符串
-            s2_str = s2.cast_str()
 
-        # 拼接字符串并存储结果
-        result = s1_str + s2_str
-        t.set_value(result)  # 设置到目标变量中
-    except Exception as e:
-        print(f"Error in concat: {e}")
-        t.set_NULL_value("")  # 设置空值表示出错
+def _concat(s1: SaytringVar | str, s2: SaytringVar | str) -> str:
+    try:
+        return (s1 if isinstance(s1, str) else s1.cast_str()) + (
+            s2 if isinstance(s2, str) else s2.cast_str()
+        )
+    except TypeError:
+        print(STEP_SKIP_MSG)
+        return ""
+
+
+def remove_tail(s: SaytringVar, tail: SaytringVar | str, t: SaytringVar) -> None:
+    s: str = s.cast_str()
+    tail: str = tail if isinstance(tail, str) else tail.cast_str()
+    result: str = s[: -len(tail)] if s.endswith(tail) else s
+    t.set_value(result)
+
+
+def _remove_tail(s: SaytringVar | str, tail: SaytringVar | str) -> str:
+    s_str: str = s if isinstance(s, str) else s.cast_str()
+    tail_str: str = tail if isinstance(tail, str) else tail.cast_str()
+    return s_str[: -len(tail_str)] if s_str.endswith(tail_str) else s_str
 
 
 def substring(
@@ -476,39 +504,40 @@ def ask_with_prompt(s: SaytringVar | str, t: SaytringVar) -> None:
         return
 
 
-#####################################################################################
-#####################################################################################
-
-def replace(s: SaytringVar, old: SaytringVar | str, new: SaytringVar | str, t: SaytringVar) -> None:
+def replace(
+    s: SaytringVar, old: SaytringVar | str, new: SaytringVar | str, t: SaytringVar
+) -> None:
     """
-    在字符串 s 中，将 old 替换为 new, 并将结果存储到 t
+    Replace all occurrences of 'old' in string 's' with 'new' and store the result in 't'.
     """
     try:
-        target_str = s.cast_str()
-        old_str = old.cast_str() if isinstance(old, SaytringVar) else old  # 处理普通字符串
-        new_str = new.cast_str() if isinstance(new, SaytringVar) else new  # 处理普通字符串
-        replaced_str = target_str.replace(old_str, new_str)
+        s_str: str = s.cast_str()
+        old_str: str = old.cast_str() if isinstance(old, SaytringVar) else old
+        new_str: str = new.cast_str() if isinstance(new, SaytringVar) else new
+        replaced_str: str = s_str.replace(old_str, new_str)
         t.set_value(replaced_str)
     except TypeError:
         print(STEP_SKIP_MSG)
         t.set_NULL_value("")
 
+
 def find(s: SaytringVar, sub: SaytringVar | str, t: SaytringVar) -> None:
     """
-    在字符串 s 中查找子字符串 sub 的位置，并将结果存储到 t
+    Find the first occurrence of 'sub' in string 's' and store the index in 't'.
     """
     try:
-        target_str = s.cast_str()
-        sub_str = sub.cast_str() if isinstance(sub, SaytringVar) else sub  # 处理普通字符串
-        index = target_str.find(sub_str)
+        target_str: str = s.cast_str()
+        sub_str: str = sub.cast_str() if isinstance(sub, SaytringVar) else sub
+        index: int = target_str.find(sub_str)
         t.set_value(index)
     except TypeError:
         print(STEP_SKIP_MSG)
         t.set_NULL_value(-1)
 
+
 def to_lower(s: SaytringVar, t: SaytringVar) -> None:
     """
-    将字符串 s 转换为小写，并将结果存储到 t
+    Convert string 's' to lowercase and store the result in 't'.
     """
     try:
         t.set_value(s.cast_str().lower())
@@ -516,9 +545,10 @@ def to_lower(s: SaytringVar, t: SaytringVar) -> None:
         print(STEP_SKIP_MSG)
         t.set_NULL_value("")
 
+
 def to_upper(s: SaytringVar, t: SaytringVar) -> None:
     """
-    将字符串 s 转换为大写，并将结果存储到 t
+    Convert string 's' to uppercase and store the result in 't'.
     """
     try:
         t.set_value(s.cast_str().upper())
@@ -526,9 +556,10 @@ def to_upper(s: SaytringVar, t: SaytringVar) -> None:
         print(STEP_SKIP_MSG)
         t.set_NULL_value("")
 
-def strip(s: SaytringVar, t: SaytringVar) -> None:
+
+def trim(s: SaytringVar, t: SaytringVar) -> None:
     """
-    去除字符串 s 前后空格，并将结果存储到 t
+    Remove leading and trailing spaces from string 's' and store the result in 't'.
     """
     try:
         t.set_value(s.cast_str().strip())
@@ -536,55 +567,50 @@ def strip(s: SaytringVar, t: SaytringVar) -> None:
         print(STEP_SKIP_MSG)
         t.set_NULL_value("")
 
-def split(s: SaytringVar, delimiter: SaytringVar, t: SaytringVar) -> None:
-    try:
-        source_str = s.cast_str()
-        delimiter_str = delimiter.cast_str()
-        result_list = source_str.split(delimiter_str)
 
-        # 设置返回值为列表
+def split(s: SaytringVar, delimiter: SaytringVar | str, t: SaytringVar) -> None:
+    """
+    Split string 's' by 'delimiter' and store the result as a list in 't'.
+    """
+    try:
+        source_str: str = s.cast_str()
+        delimiter_str: str = (
+            delimiter.cast_str() if isinstance(delimiter, SaytringVar) else delimiter
+        )
+        result_list: List[str] = source_str.split(delimiter_str)
+
+        # Set the return value as a list
         t.set_value(result_list)
-        t.set_type(DataType.LIST)
-
-        # 调试信息输出
-        print(f"Debug: Source String: {source_str}, Delimiter: {delimiter_str}")
-        print(f"Debug: Result List: {result_list}")
-    except Exception as e:
-        print(f"Error in split: {e}")
-        t.set_NULL_value([])
-
-def get_at(lst: SaytringVar, index: SaytringVar, t: SaytringVar) -> None:
-    try:
-        # 确保 lst 是列表类型，index 是整数类型
-        if lst.get_type() != DataType.LIST:
-            raise TypeError("First argument is not a list")
-        if index.get_type() != DataType.INT:
-            raise TypeError("Second argument is not an integer")
-
-        # 获取列表和索引
-        list_value = lst.cast_list()
-        index_value = index.cast_int()
-
-        # 获取指定索引的元素
-        element = list_value[index_value]
-        t.set_value(element)
-    except Exception as e:
-        print(f"Error in get_at: {e}")
+    except TypeError:
+        print(STEP_SKIP_MSG)
         t.set_NULL_value("")
 
-core_functions = {
-    "strip": strip,
-    "to_lower": to_lower,
-    "to_upper": to_upper,
-    "replace": replace,
-    "find": find,
-    "split": split,
-    "get_at":get_at,
-}
+
+def get_at(s: SaytringVar, index: SaytringVar | int, t: SaytringVar) -> None:
+    """
+    Get the element at 'index' from list 'lst' and store it in 't'.
+    """
+    try:
+        index_value: int = index.cast_int() if isinstance(index, SaytringVar) else index
+        # Ensure s is a list type and index is an integer type
+        list_value: List[str] = s.cast_list()
+
+        # Check if the index is out of bounds
+        if index_value < 0 or index_value >= len(list_value):
+            raise IndexError("Index out of range")
+
+        # Get the element at the specified index
+        element: str = list_value[index_value]
+        t.set_value(element)
+    except TypeError:
+        print(STEP_SKIP_MSG)
+        t.set_NULL_value("")
+    except IndexError as e:
+        print(f"Saytring: Index error in get_at: {e}")
+        print(STEP_SKIP_MSG)
+        t.set_NULL_value("")
 
 
-def execute_function(function_name: str, *args):
-    if function_name in core_functions:
-        core_functions[function_name](*args)
-    else:
-        print(f"Error: Undefined function '{function_name}'")
+
+#####################################################################################
+#####################################################################################
