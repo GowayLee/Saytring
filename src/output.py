@@ -396,7 +396,7 @@ def arithmetic(
         return 0
 
     # Mixed types
-    print("Saytring: Cannot perform arithmetic operation between int and string")
+    print("Saytring: Cannot perform arithmetic operation on int and string")
     print(STEP_SKIP_MSG)
     return 0
 
@@ -504,3 +504,12 @@ def ask_with_prompt(s: SaytringVar | str, t: SaytringVar) -> None:
 
 #####################################################################################
 #####################################################################################
+var = SaytringVar("Hello world!", DataType.STRING)
+var_last_result = SaytringVar()
+say(var)
+reverse(var, var_last_result)
+reverse(var_last_result, var_last_result)
+reverse(var_last_result, var_last_result)
+reverse(var_last_result, var_last_result)
+reverse(var_last_result, var_last_result)
+say(arithmetic(arithmetic("nihao: ", "lalala: ", "ADD"), var_last_result, "ADD"))

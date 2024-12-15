@@ -314,6 +314,8 @@ Symbol *Arith_Expr::type_check() {
     return ERR_Type;
   if (e1->type == e2->type && e1->type == _int)
     return _int;
+  if (e1->type == e2->type && e1->type == _string)
+    return _string;
   else {
     semant_warn(this) << "In Arithmetic expression, expressions should all be "
                          "int type! Actual type: \""
