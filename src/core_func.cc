@@ -164,4 +164,54 @@ void install_buildin_func() {
   arg_list->push_back(NULL_Type);
   Env::func_map->insert(
       std::make_pair(id_tab->add_string("ask_with_prompt"), arg_list));
+
+  // replace(string, string, string) : string
+  arg_list = new std::vector<Symbol *>;
+  arg_list->push_back(_string);
+  arg_list->push_back(_string);
+  arg_list->push_back(_string);
+  arg_list->push_back(_string);
+  Env::func_map->insert(
+      std::make_pair(id_tab->add_string("replace"), arg_list));
+
+  // find(string, string) : int
+  arg_list = new std::vector<Symbol *>;
+  arg_list->push_back(_string);
+  arg_list->push_back(_string);
+  arg_list->push_back(_int);
+  Env::func_map->insert(std::make_pair(id_tab->add_string("find"), arg_list));
+
+  // to_lower(string) : string
+  arg_list = new std::vector<Symbol *>;
+  arg_list->push_back(_string);
+  arg_list->push_back(_string);
+  Env::func_map->insert(
+      std::make_pair(id_tab->add_string("to_lower"), arg_list));
+
+  // to_upper(string) : string
+  arg_list = new std::vector<Symbol *>;
+  arg_list->push_back(_string);
+  arg_list->push_back(_string);
+  Env::func_map->insert(
+      std::make_pair(id_tab->add_string("to_upper"), arg_list));
+
+  // trim(string) : string
+  arg_list = new std::vector<Symbol *>;
+  arg_list->push_back(_string);
+  arg_list->push_back(_string);
+  Env::func_map->insert(std::make_pair(id_tab->add_string("trim"), arg_list));
+
+  // split(string, string) : list
+  arg_list = new std::vector<Symbol *>;
+  arg_list->push_back(_string);
+  arg_list->push_back(_string);
+  arg_list->push_back(_list);
+  Env::func_map->insert(std::make_pair(id_tab->add_string("split"), arg_list));
+
+  // get_at(list, int) : string
+  arg_list = new std::vector<Symbol *>;
+  arg_list->push_back(_list);
+  arg_list->push_back(_int);
+  arg_list->push_back(_string);
+  Env::func_map->insert(std::make_pair(id_tab->add_string("get_at"), arg_list));
 }

@@ -51,7 +51,7 @@ class SaytringVar:
         if self._type == DataType.BOOL:
             return "True" if self._value else "False"
         if self._type == DataType.LIST:
-            return "[" + ", ".join(map(str, cast(List[str], self._value))) + "]"
+            return "[" + ", ".join(map(str, self._value)) + "]"
         if self._type == DataType.NULL_TYPE:
             return "None"
         return "None"  # Should never reach here
@@ -65,9 +65,11 @@ class SaytringVar:
             self._type = DataType.BOOL
         elif isinstance(value, list):
             self._type = DataType.LIST
+        else:
+            raise TypeError(f"Unsupported value type: {type(value)}")
 
         self._value = value
-        self._str_value = self._to_string()  # Update _str_value
+        self._str_value = self._to_string()
 
     def set_NULL_value(self, value: Union[int, str, bool, List[str]]):
         self._type = DataType.NULL_TYPE
@@ -429,9 +431,9 @@ def _concat(s1: SaytringVar | str, s2: SaytringVar | str) -> str:
 
 
 def remove_tail(s: SaytringVar, tail: SaytringVar | str, t: SaytringVar) -> None:
-    s_str: str = s.cast_str()
-    tail_str: str = tail if isinstance(tail, str) else tail.cast_str()
-    result: str = s_str[: -len(tail_str)] if s_str.endswith(tail_str) else s_str
+    s: str = s.cast_str()
+    tail: str = tail if isinstance(tail, str) else tail.cast_str()
+    result: str = s[: -len(tail)] if s.endswith(tail) else s
     t.set_value(result)
 
 
@@ -500,6 +502,114 @@ def ask_with_prompt(s: SaytringVar | str, t: SaytringVar) -> None:
     except TypeError:
         print(STEP_SKIP_MSG)
         return
+
+
+def replace(
+    s: SaytringVar, old: SaytringVar | str, new: SaytringVar | str, t: SaytringVar
+) -> None:
+    """
+    Replace all occurrences of 'old' in string 's' with 'new' and store the result in 't'.
+    """
+    try:
+        s_str: str = s.cast_str()
+        old_str: str = old.cast_str() if isinstance(old, SaytringVar) else old
+        new_str: str = new.cast_str() if isinstance(new, SaytringVar) else new
+        replaced_str: str = s_str.replace(old_str, new_str)
+        t.set_value(replaced_str)
+    except TypeError:
+        print(STEP_SKIP_MSG)
+        t.set_NULL_value("")
+
+
+def find(s: SaytringVar, sub: SaytringVar | str, t: SaytringVar) -> None:
+    """
+    Find the first occurrence of 'sub' in string 's' and store the index in 't'.
+    """
+    try:
+        target_str: str = s.cast_str()
+        sub_str: str = sub.cast_str() if isinstance(sub, SaytringVar) else sub
+        index: int = target_str.find(sub_str)
+        t.set_value(index)
+    except TypeError:
+        print(STEP_SKIP_MSG)
+        t.set_NULL_value(-1)
+
+
+def to_lower(s: SaytringVar, t: SaytringVar) -> None:
+    """
+    Convert string 's' to lowercase and store the result in 't'.
+    """
+    try:
+        t.set_value(s.cast_str().lower())
+    except TypeError:
+        print(STEP_SKIP_MSG)
+        t.set_NULL_value("")
+
+
+def to_upper(s: SaytringVar, t: SaytringVar) -> None:
+    """
+    Convert string 's' to uppercase and store the result in 't'.
+    """
+    try:
+        t.set_value(s.cast_str().upper())
+    except TypeError:
+        print(STEP_SKIP_MSG)
+        t.set_NULL_value("")
+
+
+def trim(s: SaytringVar, t: SaytringVar) -> None:
+    """
+    Remove leading and trailing spaces from string 's' and store the result in 't'.
+    """
+    try:
+        t.set_value(s.cast_str().strip())
+    except TypeError:
+        print(STEP_SKIP_MSG)
+        t.set_NULL_value("")
+
+
+def split(s: SaytringVar, delimiter: SaytringVar | str, t: SaytringVar) -> None:
+    """
+    Split string 's' by 'delimiter' and store the result as a list in 't'.
+    """
+    try:
+        source_str: str = s.cast_str()
+        delimiter_str: str = (
+            delimiter.cast_str() if isinstance(delimiter, SaytringVar) else delimiter
+        )
+        result_list: List[str] = source_str.split(delimiter_str)
+
+        # Set the return value as a list
+        t.set_value(result_list)
+    except TypeError:
+        print(STEP_SKIP_MSG)
+        t.set_NULL_value("")
+
+
+def get_at(s: SaytringVar, index: SaytringVar | int, t: SaytringVar) -> None:
+    """
+    Get the element at 'index' from list 'lst' and store it in 't'.
+    """
+    try:
+        index_value: int = index.cast_int() if isinstance(index, SaytringVar) else index
+        # Ensure s is a list type and index is an integer type
+        list_value: List[str] = s.cast_list()
+
+        # Check if the index is out of bounds
+        if index_value < 0 or index_value >= len(list_value):
+            raise IndexError("Index out of range")
+
+        # Get the element at the specified index
+        element: str = list_value[index_value]
+        t.set_value(element)
+    except TypeError:
+        print(STEP_SKIP_MSG)
+        t.set_NULL_value("")
+    except IndexError as e:
+        print(f"Saytring: Index error in get_at: {e}")
+        print(STEP_SKIP_MSG)
+        t.set_NULL_value("")
+
 
 
 #####################################################################################
