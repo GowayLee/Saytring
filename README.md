@@ -4,23 +4,23 @@ A python-based programming language for string-processing.
 
 ## Intro
 
-Saytring is an experimental language with hybird features designed to provide users with an intuitive and natural experience for string manipulation.
+Saytring is an experimental language with hybrid features designed to provide users with an intuitive and natural experience for string manipulation.
 
-In this language, strings are treated as first-class citizens, allowing users to perform various flexible operations by calling functions and freely combine them, such as concatenation, replacement, substring slicing, reversing strings and so on.
+In this language, strings are treated as first-class citizens, allowing users to perform various flexible operations by calling functions and freely combining them, such as concatenation, replacement, substring slicing, reversing strings, and more.
 
-The design of this language is also inspired by natural language. Various syntax sugers are added to feature a clear and concise syntax that enables users to easily create, modify, and manipulate strings.
+The design of this language is also inspired by natural language. Various syntactic sugars are added to feature a clear and concise syntax that enables users to easily create, modify, and manipulate strings.
 
-For example, you can simply use `ask` to get user input, the `say` method to output information, or `together` to concatenate multiple strings. These designs make programming more interactive and enjoyable, rather than just tedious code writing.
+For example, you can simply use `ask` to get user input, the `say` function to output data, or `+` to concatenate multiple strings. These designs make programming more interactive and enjoyable, rather than just tedious code writing.
 
 ```
 # Declare a String valriable
-define user_answer
+define user_answer as ("wo shi nai long")
 
 # Read from user input with prompt
 ask "Tell me your answer: " as user_answer
 
 # Print variable
-say "Your anser is: " together user_answer
+say("Your anwser is: " + user_answer;)
 ```
 
 ---
@@ -29,18 +29,17 @@ say "Your anser is: " together user_answer
 
 ### 1. Variable Declaration
 
-```
-# Declare without initialization
-define my_var
+To enhance type safety, it is illegal to declare a variable without initialization.
 
+```
 # Declare with initialization
-define my_var as "init string"
+define my_var as ("init string")
 ```
 
 ### 2. Assignment
 
 ```
-set my_var as "Hello, world!"
+set my_var as ("Hello, world!")
 ```
 
 ### 3. Input and Output
@@ -50,14 +49,14 @@ set my_var as "Hello, world!"
 ask "<prompt>" as user_input
 
 # Output a string
-say user_input
+say(user_input)
 ```
 
 ### 4. Function Calls
 
-A great number of string-processing functions are built in.
+A great number of string-processing functions are built into the system.
 
-Like methods in OOP languages, every function call in Saytring is also related to a variable (which is `object` in OOP). This rule can make parameter passing more simple.
+Similar to "methods" in Object-Oriented Programming (OOP), every function call in Saytring is associated with a variable (which corresponds to an `object` in OOP). This rule helps make parameter passing more stable and straightforward.
 
 ```
 # Call function count_digit() with no args
@@ -67,37 +66,40 @@ my_var do count_digit
 my_var do concate using "Hello!"
 
 # Chain call functions
-my_var do concate using "Hello!" -> do reverse -> do slice using 2, 4
+my_var do concate using ["Hello!"] -> do reverse -> do slice using [2, 4]
 ```
 
 ### 5. Dynamic Property
 
-As it mentioned above, in Saytring, strings are treated as first-class citizens. This means that it avoids having variables with data type differ from string, such as int.
+As mentioned above, in Saytring, strings are treated as first-class citizens. This means that it avoids having variables with data types different from strings, such as integers.
 
-To cover the shortage caused by the limitation of data type, we introduce **Dynamic Property** in Saytring.
+To address the shortage caused by the limitation of data types, we introduce **Dynamic Properties** in Saytring.
 
-**Dynamic Property** are like _Member Features_ in OOP language, belong to any variable (mostly `string` in Saytring). Extra information can be stored in these features.
+**Dynamic Properties** are similar to _Member Functions_ in object-oriented programming languages. They belong to any variable (mostly `string` in Saytring). Extra information can be stored in these properties.
 
 ```
 define my_var as "ABCDEFG"
 
-# Declare a new feature lower_case of my_var and initialize it
-my_var has lower_case as "abcdefg"
+# Declare a new property lower_case of my_var
+my_var has [lower_case]
+
+# Declare various properties
+my_var has [prop1, prop2, prop3]
 
 # Access to feature of my_var
-say my_var's lower_case
+say(my_var's lower_case)
 ```
 
-Which makes Dynamic Property more powerful is that it can act as the return data of functions. Feature named `last_result` is a reversed feature and contains the return data of the last function call of the variable.
+What makes Dynamic Properties more powerful is that they can act as the return data of functions. A property named `last_result` is a reserved property that contains the return data of the last function call on the variable.
 
 ```
 my_var do count_digit
 
 # Declare a new properties
-my_var has digit_count, reverse_str
+my_var has [digit_count, reverse_str]
 
 # Assign digit_count to return data of count_digit
-set my_var's digit_count as last_result
+set my_var's digit_count as (last_result)
 
 # Specify location to store funciton result
 my_var do reverse on reverse_str
@@ -108,40 +110,41 @@ my_var's reverse_str do reverse
 # Use property to store results during chain call
 my_var do reverse on my_var's reverse_str
     -> do count_digit on my_var's digit_count
-    -> do slice using 2, 4
+    -> do substring using [2, 4]
 ```
 
 Using dynamic property with function calls has some rules:
 
-- Function results can only be stored in properties belong to the variable who performs call.
+- Function results can only be stored in properties belong to the variable who conducts calling.
 
   ```
   my_var do reverse on reverse_str # (store in my_var's reverse_str)
 
-  my_var do reverse on other_var's reverse_str # Wrong
+  my_var do reverse on other_var's reverse_str # Wrong, will report Warning
   ```
 
-- The results of functions called by properties will be stored in properties belong to the owner variable of the property who performs call.
+- The results of functions called by properties will be stored in property belongs to the owner variable of the property who conducts calling.
   ```
   my_var's reverse_str do count_digit on digit_count # (store in my_var's digit_count)
   ```
 
 ### 6. Conditional
 
-To simplify, Saytring only supports Condition Expression of `if-then` syntax.
+```
+if my_var's digit_count gt 3; then
+  say("The digit of my_var is more than 3")
+else
+  say("The digit of my_var is not more than 3")
+endif
+```
+
+Condition Expression can be used in Chain Call.
 
 ```
-if my_var's digit_count gt 3 then
-  say "The digit of my_var is more than 3"
-```
-
-Condition Expression can be used with Chain Call.
-
-```
-my_var has digit_count
-my_var do count_digit on digit_count
-    -> if digit_count gt 3 then do reverse
-    -> do slice using 1, 5
+my_var has [length]
+my_var do get_length on length
+    -> if digit_count gt 3; then do reverse
+    -> do substring using [1, 3]
 ```
 
 ### 7. Comparison Operator
@@ -163,8 +166,8 @@ Saytring has 5 comparison Operators
                  |  io_expr
                  |  call_expr
                  |  cond_expr
-                 |  expr comp_op expr
-                 |  expr arith_op expr
+                 |  expr comp_op expr ';'
+                 |  expr arith_op expr ';'
                  |  string
                  |  int
                  |  true
@@ -195,33 +198,31 @@ chain_call_expr ::= chain_op func_expr
 
 > TODO: Add syntactic sugar
 
-> TODO: Fix syntax of arithmetic and comparion
-
 ### Syntactic Sugar
 
-Saytring emploies a great number of Syntactic Sugars to make its syntax familiar with natural language.
+Saytring employs a great number of syntactic sugars to make its syntax familiar to natural language.
 
 #### 1. I/O Expression
 
-`ask [expr] as identifier` `say expr` are syntactic sugars for function call expressions.
+`ask [expr] as identifier` and `say expr` are syntactic sugars for function call expressions.
 
-Compiler will translate them to expressions that perform a call to Input/Output functions build in Saytring Runtime.
+The compiler will translate these into expressions that perform calls to built-in Input/Output functions in the Saytring Runtime.
 
 #### 2. Chain Call
 
-Chain Call is designed to make code more clean when multiple functions are called by **one** variable **in sequence**.
+Chain Call is designed to make the code cleaner when multiple functions are called by **one** variable **in sequence**.
 
 ```
-my_var do reverse -> de reverse on re_str -> do count_digit
+my_var do reverse -> de reverse on re_str -> do get_length
 ```
 
-In this example, the first `reverse()` will receive `my_var` as parameter and store return data in `my_var's last_result`.
+In this example, the first `reverse()` will receive `my_var` as a parameter and store the return data in `my_var's last_result`.
 
-The second `reverse()` will receive `my_var's last_result` as parameter and store return data in `my_var's re_str` since the property is specified.
+The second `reverse()` will receive `my_var's last_result` as a parameter and store the return data in `my_var's re_str` since the property is specified.
 
-The last `count_digit()` will receive `my_var's re_str` as parameter because the previous function call stores return data in this property. And finally, store return data in `my_var's last_result`.
+The last `count_digit()` will receive `my_var's re_str` as a parameter because the previous function call stores the return data in this property. Finally, it will store the return data in `my_var's last_result`.
 
-The following code shows the parsing result of chain call:
+The following code shows the parsing result of the chain call:
 
 ```
 my_var do reverse on last_result
@@ -229,15 +230,23 @@ my_var's last_result do reverse on re_str
 my_var's re_str do count_digit on last_result
 ```
 
+### 3. Arithmetic for Strings
+
+Arithmetic expressions such as `expression + expression` and `expression - expression` were originally designed for integers. Here, we introduce a syntactic sugar to extend these operations to work with strings.
+
+- `str1 + str2;` denotes the concatenation of the two strings. For example, `"abcd" + "1234"` results in `"abcd1234"`.
+
+- `str1 - str2;` signifies the removal of the suffix of `str1` that matches `str2`. For instance, `"abcde" - "cde"` yields `"ab"`. If `str1` does not end with `str2`, the operation has no effect.
+
 ---
 
 ## Type System
 
 ### 1. "Here is **NO TYPE** anymore"
 
-Saytring is designed to be a language that is friendly to users without programming background. So, we "cancel" types in Saytring.
+Saytring is designed to be a language that is user-friendly for individuals without a programming background. Therefore, we do not use explicit types in Saytring.
 
-In Saytring, everything is a **string**, because runtime envrionment will automatically convert literal value of other types to string.
+In Saytring, everything is treated as a **string**, as the runtime environment automatically converts literal values of other types into strings.
 
 ```
 # Literal int of 1234
@@ -247,67 +256,67 @@ In Saytring, everything is a **string**, because runtime envrionment will automa
 true -> "true"
 
 # Literal List of ["a", "ab", "abc"]
-["a", "ab", "abc"] -> "{a}, {ab}, {abc}"
+["a", "ab", "abc"] -> "[\"a\", \"ab\", \"abc\"]"
 ```
 
 Here are some examples to show how converting works:
 
 ```
 # my_var has literal value of int 114514
-define my_var as 114514
-say my_var                # output "114514"
+define my_var as (114514)
+say(my_var)                   # output "114514"
 
 # my_var has literal value of bool true
-define my_var as true
-say my_var                # output "true"
+define my_var as (true)
+say(my_var)                   # output "true"
 
 # return to my_var's last_result, so it is an int now
 my_var do get_length
-say my_var's last_result  # output "6"
+say(my_var's last_result)     # output "6"
 
 # function get_char() require int parameter
-my_var do get_char using my_var's last_result - 1
-say my_var's last_result  # output "5"
+my_var do get_char using [my_var's last_result - 1;]
+say(my_var's last_result)     # output "5"
 ```
 
 ### 2. Type Checking
 
-The single-type design of Saytring will cut down its safety, since there is no explicit type information.
+The single-type design of Saytring may compromise its safety, as it lacks explicit type information.
 
-For example:
+For instance:
 
 ```
-# User want to declare a Bool type variable
-# And a value of string "true" is stored in my_var
-define my_var as true
+# User intends to declare a Bool type variable
+# A value of string "true" is stored in my_var
+define my_var as (true)
 
-# get_char() is a function for strings logically
-my_var do get_char using 2
+# get_char() is a function intended for strings
+my_var do get_char using [2]
 
-say my_var's last_result  # output "u"
+say(my_var's last_result)  # output "u"
 ```
 
-Although `my_var` is a Bool variable, this code won't create a runtime error. Because Saytring automatically stores `my_var` as a string and hide the fact that `my_var` is a Boolean value. Finally, `get_char()` will be happy with parameter types.
+Even though `my_var` is intended to be a Boolean variable, this code will not result in a runtime error. This is because Saytring automatically stores `my_var` as a string, effectively concealing the fact that it is a Boolean value. Consequently, `get_char()` will accept the parameter without issue.
 
-However, it performs an action having no sense (get the third character of a Bool). This is a side effect caused by single-type design.
+Nevertheless, this operation is nonsensical (retrieving the third character of a Boolean). This unintended behavior is a consequence of the single-type design.
 
-In order to detect such logical errors as much as possible during compiling period, Saytring will conduct a type-checking before code generation. Like python, implicit type information of variables will be inferred based on context.
+To mitigate such logical errors as much as possible during the compilation phase, Saytring will perform type-checking prior to code generation. Similar to Python, implicit type information for variables will be inferred based on the context.
 
 For example:
 
 ```
 # Explicitly declaration of content, the type of my_var is string
-define my_var as "Hello, world!"    # my_var : string
+define my_var as ("Hello, world!")    # my_var : string
 
-define my_num as 114514             # my_num : int
+define my_num as (114514)             # my_num : int
 
 # Inferred from the function return type
-my_var do get_length                # my_var's last_result : int
+my_var do get_length                  # my_var's last_result : int
 ```
 
 ### 3. Types
 
-There are 5 types in Saytring:
+There are five types in Saytring:
 
 - `string`
 - `int`
@@ -315,29 +324,31 @@ There are 5 types in Saytring:
 - `bool`
 - `NULL_Type`
 
-`NULL_Type` is for variables have not been initialized or assigned value, and several expressions.
+`NULL_Type` is used for variables that have not been initialized or assigned a value, as well as for certain expressions.
 
 ### 4. Type Rules
 
-`E` is the type environment which contains type information of **identifiers**.
+This section outlines the type inference rules for various operations within the system. Each rule defines the conditions (hypotheses) under which a specific operation can be performed and the resulting type inference.
 
-`F` is the type environment which contains type information of **functions**.
+`E` represents the type environment, which contains type information for **identifiers**.
+
+`F` represents the type environment, which contains type information for **functions**.
 
 #### 1. Declaration
 
-- Hypothese:
+- **Hypothesis:**
 
   `E[NULL_Type/ID] -> true`
 
-- Result:
+- **Result:**
 
   `define ID : NULL_Type`
 
-  `ID has ID : NULL_Type`
+  `OWNER_ID has ID : NULL_Type`
 
 #### 2. Assignment
 
-- Hypothese:
+- **Hypothesis:**
 
   `E, F -> e : T`
 
@@ -345,63 +356,73 @@ There are 5 types in Saytring:
 
   `E[T/ID] -> true`
 
-- Result:
+- **Result:**
 
-  `define ID as e : NULL_Type`
+  `define ID as(e) : NULL_Type`
 
-  `set ID as e : NULL_Type`
+  `set ID as(e) : NULL_Type`
 
 #### 3. Identifier
 
-- Hypothese:
+- **Hypothesis:**
 
   `E(ID) = T`
 
-- Result: `ID : T`
+- **Result:**
+
+  `ID : T`
 
 #### 4. Function Call
 
-- Hypothese:
+- **Hypothesis:**
 
-  `F(f)=(T0, ..., Tn, Tn+1)`
+  `F(f) = (T0, ..., Tn, Tn+1)`
 
-  `ei : int | string | list | bool , 0 <= i <= n`
+  `ei : int | string | list | bool, 0 <= i <= n`
 
-  `ei = Ti , 0 <= i <= n`
+  `ei = Ti, 0 <= i <= n`
 
   `E[Tn+1/ID] -> true`
 
-- Result:
+- **Result:**
 
   `e0 do f [using e1...en] on ID : Tn+1`
 
 #### 5. Conditional
 
-- Hypothese:
+- **Hypothesis:**
 
   `E, F -> e : bool`
 
-- Result: `if e then T1 else T2 : NULL_Type`
+- **Result:**
+
+  `if e then T1 else T2 endif : NULL_Type`
 
 #### 6. Comparison
 
-- Hypothese:
+- **Hypothesis:**
 
   `E, F -> e0 : string | int`
 
   `E, F -> e1 : string | int`
 
-- Result: `e0 comp_op e1 : bool`
+- **Result:**
+
+  `e0 comp_op e1 ; : bool`
 
 #### 7. Arithmetic
 
-- Hypothese:
+- **Hypothesis:**
 
-  `E, F -> e0 : int`
+  `E, F -> e0 : int | str`
 
-  `E, F -> e1 : int`
+  `E, F -> e1 : int | str`
 
-- Result: `e0 arith e1 : int`
+  `e1 = e0 : T`
+
+- **Result:**
+
+  `e0 arith e1 : T`
 
 #### 8. Constant
 
@@ -412,24 +433,31 @@ There are 5 types in Saytring:
 
 #### 9. Output
 
-- Hypothese:
+- **Hypothesis:**
 
   `E, F -> e0 : int | string | bool | list`
 
-- Result: `say e0 : NULL_Type`
+- **Result:**
+
+  `output e0 : NULL_Type`
 
 #### 10. Input
 
-By default, the type of variable assgined by Input Expression is `string`. This will make that variable cannot be easily used in other expressions.
-User need to call `check_int()` `check_bool()` functions to switch the type of that variable to certain type. This force users to consider the case that the input from outer is not legal.
+By default, the type of a variable assigned by an Input Expression is `NULL_Type`. This limitation means that the variable cannot be directly used in other expressions without type conversion.
 
-- Hypothese:
+To address this, users must explicitly call the `cast_null_to_str()`, `cast_null_to_int()` or `cast_null_to_bool()` functions to convert the variable to the desired type.
+
+This approach ensures that users consider the possibility that the input received from external sources may not be valid.
+
+- **Hypothesis:**
 
   `E, F -> e0 : string`
 
-  `E[string/ID] -> true`
+  `E[NULL_Type/ID] -> true`
 
-- Result: `ask e0 as ID : NULL_Type`
+- **Result:**
+
+  `ask e0 and assign to ID : NULL_Type`
 
 ---
 
