@@ -128,6 +128,13 @@ class SaytringVar:
             print('Saytring: Affected var: "' + self._str_value[:WARN_MSG_STRLEN] + '"')
 
 
+#############################################
+########### Pre-defined Variables ############
+#############################################
+
+_anonymous = SaytringVar()
+_anonymous_last_result = SaytringVar()
+
 ############################################
 ########### Type-cast Functions ############
 ############################################
@@ -343,9 +350,7 @@ def arithmetic(
 ) -> int | str:
     # Helper function to get value from SaytringVar or direct value
     def _get_value(s: SaytringVar | str | int) -> int | str | None:
-        if isinstance(s, str):
-            return s
-        elif isinstance(s, int):
+        if isinstance(s, str) or isinstance(s, int):
             return s
         elif isinstance(s, SaytringVar):
             if s.get_type() is DataType.STRING:
@@ -373,13 +378,15 @@ def arithmetic(
 
     # Check if both are integers
     if isinstance(t1, int) and isinstance(t2, int):
-        if op == "-":
+        if op == "SUB":
             return t1 - t2
-        if op == "+":
+        if op == "ADD":
             return t1 + t2
 
     # Mixed types
-    print("Saytring: Cannot perform arithmetic operation between int and string")
+    print(
+        "Saytring: Cannot perform arithmetic operation between int and string, return 0 by default"
+    )
     print(STEP_SKIP_MSG)
     return 0
 

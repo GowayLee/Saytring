@@ -30,10 +30,12 @@ extern String_Tab *id_tab;
 extern String_Tab *str_tab;
 extern String_Tab *int_tab;
 
-// Predefined symbols, basic types in Saytring
+// Predefined symbols & basic types in Saytring
 extern Symbol *_string, *_int, *_list, *_bool, *NULL_Type, *ERR_Type,
     *LAST_RESULT;
 
 extern Symbol *_ADD, *_SUB, *_GT, *_LT, *_GE, *_LE, *_EQ, *_NE;
+
+extern Symbol *_anonymous;
 
 #endif

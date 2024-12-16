@@ -335,6 +335,7 @@ void Program::semant_check() {
   // Set up predefined types
   install_type_cast_map();
   install_buildin_func();
+  install_buildin_var();
 
   // Do type-check
   for (Expression *expr : *this->expr_list)

@@ -288,30 +288,35 @@ public:
 };
 
 /////////////// Constant //////////////////
-class String_Const_Expr : public Expression {
+class Const_Expr : public Expression {
+public:
+  Const_Expr(YYLTYPE loc) : Expression(loc) {}
+};
+
+class String_Const_Expr : public Const_Expr {
 public:
   Symbol *token;
-  String_Const_Expr(Symbol *token, YYLTYPE loc) : Expression(loc) {
+  String_Const_Expr(Symbol *token, YYLTYPE loc) : Const_Expr(loc) {
     this->token = token;
   }
   Symbol *type_check();
   std::string code_generate();
 };
 
-class Int_Const_Expr : public Expression {
+class Int_Const_Expr : public Const_Expr {
 public:
   Symbol *token;
-  Int_Const_Expr(Symbol *token, YYLTYPE loc) : Expression(loc) {
+  Int_Const_Expr(Symbol *token, YYLTYPE loc) : Const_Expr(loc) {
     this->token = token;
   }
   Symbol *type_check();
   std::string code_generate();
 };
 
-class Bool_Const_Expr : public Expression {
+class Bool_Const_Expr : public Const_Expr {
 public:
   bool value;
-  Bool_Const_Expr(bool value, YYLTYPE loc) : Expression(loc) {
+  Bool_Const_Expr(bool value, YYLTYPE loc) : Const_Expr(loc) {
     this->value = value;
   }
   Symbol *type_check();

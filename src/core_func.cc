@@ -215,3 +215,10 @@ void install_buildin_func() {
   arg_list->push_back(_string);
   Env::func_map->insert(std::make_pair(id_tab->add_string("get_at"), arg_list));
 }
+
+void install_buildin_var() {
+  // Install anonymous variable
+  Env::id_map->insert(std::make_pair(_anonymous, NULL_Type));
+  Env::property_map->insert(
+      std::make_pair(std::make_pair(_anonymous, LAST_RESULT), NULL_Type));
+}

@@ -45,3 +45,5 @@ Symbol *_GE = new Symbol("GE");
 Symbol *_LE = new Symbol("LE");
 Symbol *_EQ = new Symbol("EQ");
 Symbol *_NE = new Symbol("NE");
+
+Symbol *_anonymous = new Symbol("_anonymous");

@@ -16,6 +16,8 @@ void warning(const char *s, YYLTYPE loc);
 void yyerror(const char *s, YYLTYPE loc);
 void yyerror(const char *s);
 
+void parse_funcs(Identifier *caller);
+
 extern int yylex();
 
 Program *ast_root;            /* the result of the parse  */
@@ -61,7 +63,7 @@ Identifier *temp_return_id;
 %type <expressions> expr_list parameter_list
 
 %type <expression> decl_expr property_decl_expr assi_expr io_expr cond_expr
-%type <expression> call_expr cast_expr
+%type <expression> call_expr cast_expr const_expr
 %type <direct_call_expr> func_expr
 
 /* Precedence declaration */
@@ -96,6 +98,7 @@ expression : assi_expr        { $$ = $1; }
            | cond_expr        { $$ = $1; }
            | identifier       { $$ = $1; }
            | cast_expr        { $$ = $1; }
+           | const_expr       { $$ = $1; }
            | decl_expr          ;
            | property_decl_expr ;
            | call_expr          ;
@@ -117,18 +120,6 @@ expression : assi_expr        { $$ = $1; }
                has_pushed_back = false;
              }
            }
-           | INT_CONST
-           {
-             $$ = new Int_Const_Expr($1, @1);
-           }
-           | STR_CONST
-           {
-             $$ = new String_Const_Expr($1, @1);
-           }
-           | BOOL_CONST
-           {
-             $$ = new Bool_Const_Expr($1, @1);
-           }
            | error '\n'
            {
              yyerror("Error in expression", yylloc);
@@ -146,12 +137,26 @@ identifier : ID
            }
            ;
 
+const_expr : INT_CONST
+           {
+             $$ = new Int_Const_Expr($1, @1);
+           }
+           | STR_CONST
+           {
+             $$ = new String_Const_Expr($1, @1);
+           }
+           | BOOL_CONST
+           {
+             $$ = new Bool_Const_Expr($1, @1);
+           }
+           ;
+
 decl_expr : DEFINE ID AS '(' expression ')'
-          {  
+          {
             global_expr_list->push_back(new Var_Decl_Expr($2, $5, @2));
 
             // Automatically declare var's last_result, as well
-            global_expr_list->push_back(new Property_Decl_Expr(new Single_Identifier($2, @2), id_tab->add_string("last_result"), @2));
+            global_expr_list->push_back(new Property_Decl_Expr(new Single_Identifier($2, @2), LAST_RESULT, @2));
             has_pushed_back = true;
           }
           ;
@@ -168,13 +173,13 @@ property_decl_expr : identifier HAS '[' dummy_identifier_list ']'
                      }
                    }
                    ;
-              
-dummy_identifier_list :ID 
+
+dummy_identifier_list : ID
                       {
                         temp_identifier_list->clear();
                         temp_identifier_list->push_back($1);
-                      }    
-                      | ID ',' dummy_identifier_list 
+                      }
+                      | ID ',' dummy_identifier_list
                       {
                         temp_identifier_list->push_back($1);
                       }
@@ -204,6 +209,7 @@ cast_expr : CONVERT identifier TO TYPE_CONST ON identifier
           {
             $$ = new Cast_Expr($2, $4, adjust_return_id($2), @2);
           }
+          ;
 
 // Will collect parameters in inverse order
 parameter_list : expression
@@ -239,45 +245,13 @@ parameter_list : expression
   */
 call_expr : identifier dummy_chain_call_list
           {
-            Identifier *caller = $1;
-
-            // dummy_chain_call_list collects call_expr in inverse order.
-            // size_t i is unsigned integer so there is no negative
-            for (size_t i = temp_call_list->size(); i > 0; i--) {
-              Call_Expr *expr = temp_call_list->at(i - 1);
-              if (expr->is_cond_call()) { // This expr is an function call with condition
-                Cond_Call_Expr *cond_call_expr = static_cast<Cond_Call_Expr *>(expr);
-                Direct_Call_Expr *direct_expr = cond_call_expr->call_expr;
-
-                // Pass prev call's return_id to current call's id
-                direct_expr->id = (i == temp_call_list->size() ? caller : temp_return_id);
-
-                // Check owner and property relationship
-                if (!has_same_owner(direct_expr->id, direct_expr->return_id))
-                  warning("Should not store result value in a property of another variable!", yylloc);
-
-                direct_expr->return_id = adjust_return_id(direct_expr->id, direct_expr->return_id);
-                // Continue pass down return_id
-                temp_return_id = direct_expr->return_id;
-
-                // Convert Cond_Call_Expr to Cond_Expr
-                global_expr_list->push_back(new Cond_Expr(cond_call_expr->predictor, direct_expr, cond_call_expr->location));
-              } else {
-                Direct_Call_Expr *direct_expr = static_cast<Direct_Call_Expr *>(expr);
-
-                // Pass prev call's return_id to current call's id
-                direct_expr->id = (i == temp_call_list->size() ? caller : temp_return_id);
-
-                // Check owner and property relationship
-                if (!has_same_owner(direct_expr->id, direct_expr->return_id))
-                  warning("Should not store result value in a property of another variable!", yylloc);
-
-                direct_expr->return_id = adjust_return_id(direct_expr->id, direct_expr->return_id);
-                temp_return_id = direct_expr->return_id;
-                global_expr_list->push_back(direct_expr);
-              }
-            }
-            has_pushed_back = true;
+            parse_funcs($1);
+          }
+          | const_expr dummy_chain_call_list
+          {
+            Identifier *anony_caller = new Single_Identifier(_anonymous, @1);
+            global_expr_list->push_back(new Assi_Expr(anony_caller, $1, @1));
+            parse_funcs(anony_caller);
           }
           ;
 
@@ -299,7 +273,7 @@ dummy_chain_call_list : func_expr
                       {
                         temp_call_list->push_back(new Cond_Call_Expr($3, $5, @3));
                       }
-                      | CHAIN error 
+                      | CHAIN error
                       {
                         yyerror("Error in chain call", yylloc);
                         yyerrok;
@@ -423,4 +397,42 @@ void yyerror(const char *s, YYLTYPE loc) {
             << ": " << s << " at or near ";
   print_token(yychar);
   std::cerr << std::endl;
+}
+
+void parse_funcs(Identifier *caller) {
+  // dummy_chain_call_list collects call_expr in inverse order.
+  for (size_t i = temp_call_list->size(); i > 0; i--) {
+    Call_Expr *expr = temp_call_list->at(i - 1);
+    if (expr->is_cond_call()) { // This expr is a function call with condition
+      Cond_Call_Expr *cond_call_expr = static_cast<Cond_Call_Expr *>(expr);
+      Direct_Call_Expr *direct_expr = cond_call_expr->call_expr;
+
+      // Pass previous call's return_id to current call's id
+      direct_expr->id = (i == temp_call_list->size() ? caller : temp_return_id);
+
+      // Check owner and property relationship
+      if (!has_same_owner(direct_expr->id, direct_expr->return_id))
+        warning("Should not store result value in a property of another variable!", yylloc);
+
+      direct_expr->return_id = adjust_return_id(direct_expr->id, direct_expr->return_id);
+      temp_return_id = direct_expr->return_id;
+
+      // Convert Cond_Call_Expr to Cond_Expr
+      global_expr_list->push_back(new Cond_Expr(cond_call_expr->predictor, direct_expr, cond_call_expr->location));
+    } else {
+      Direct_Call_Expr *direct_expr = static_cast<Direct_Call_Expr *>(expr);
+
+      // Pass previous call's return_id to current call's id
+      direct_expr->id = (i == temp_call_list->size() ? caller : temp_return_id);
+
+      // Check owner and property relationship
+      if (!has_same_owner(direct_expr->id, direct_expr->return_id))
+      warning("Should not store result value in a property of another variable!", yylloc);
+
+      direct_expr->return_id = adjust_return_id(direct_expr->id, direct_expr->return_id);
+      temp_return_id = direct_expr->return_id;
+      global_expr_list->push_back(direct_expr);
+    }
+  }
+  has_pushed_back = true;
 }
