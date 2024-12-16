@@ -69,6 +69,26 @@ my_var do concate using "Hello!"
 my_var do concate using ["Hello!"] -> do reverse -> do slice using [2, 4]
 ```
 
+A literal value can also call a function.
+
+```
+"wo shi nai long" do reverse
+
+114514 do get_length  # Will report warning, but can run
+
+true do reverse       # Will report warning, but can run
+```
+
+In Saytring Runtime, a variable named `_anonymous` is pre-defined, when compiler meets literal value calling functions, it will firstly assign this literal value to `_anonyous` and translate this expression to `_anonymous do <func_name> [using] [on]`
+
+`_anonymous` has property `last_result`(will describe in the next section), as well. But it should not be explicitly accessed by users, so the best practical of literal value calling is to specify the return data every time.
+
+```
+define var as ("")
+var has [prop]
+"wo cai shi nai long" do reverse on var's prop
+```
+
 ### 5. Dynamic Property
 
 As mentioned above, in Saytring, strings are treated as first-class citizens. This means that it avoids having variables with data types different from strings, such as integers.
@@ -115,18 +135,19 @@ my_var do reverse on my_var's reverse_str
 
 Using dynamic property with function calls has some rules:
 
-- Function results can only be stored in properties belong to the variable who conducts calling.
+```
+define var as ("nailong")
+define foo as (666)
 
-  ```
-  my_var do reverse on reverse_str # (store in my_var's reverse_str)
+var has [prop]
+foo has [prop]
 
-  my_var do reverse on other_var's reverse_str # Wrong, will report Warning
-  ```
+var do reverse                # return to var's last_result
+var do reverse on prop        # return to var's prop
+var do reverse on var's prop  # return to var's prop
+var do reverse on foo's prop  # return to foo's prop
 
-- The results of functions called by properties will be stored in property belongs to the owner variable of the property who conducts calling.
-  ```
-  my_var's reverse_str do count_digit on digit_count # (store in my_var's digit_count)
-  ```
+```
 
 ### 6. Conditional
 
@@ -166,12 +187,9 @@ Saytring has 5 comparison Operators
                  |  io_expr
                  |  call_expr
                  |  cond_expr
+                 |  const_expr
                  |  expr comp_op expr ';'
                  |  expr arith_op expr ';'
-                 |  string
-                 |  int
-                 |  true
-                 |  false
      identifier ::= ID
                  |  ID's ID
       decl_expr ::= define identifier as '(' expr ')'
@@ -181,6 +199,7 @@ Saytring has 5 comparison Operators
                  |  ask as identifier
                  |  say '(' expr ')'
       call_expr ::= identifier func_expr
+                 |  const_expr func_expr
                  |  call_expr chain_call_expr
 chain_call_expr ::= chain_op func_expr
                  |  chain_op cond_func_expr
@@ -192,11 +211,10 @@ chain_call_expr ::= chain_op func_expr
                  |  do identifier using '[' expr [[, expr]]* ']' on identifier
  cond_func_expr ::= '(' if expr then func_expr ')'
       cond_expr ::= if expr then expr else expr endif
+     const_expr ::= string | int | "true" | "false"
         comp_op ::= gt | lt | ge | le | eq | ne
        arith_op ::= - | +
 ```
-
-> TODO: Add syntactic sugar
 
 ### Syntactic Sugar
 

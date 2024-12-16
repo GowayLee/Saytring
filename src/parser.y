@@ -412,7 +412,7 @@ void parse_funcs(Identifier *caller) {
 
       // Check owner and property relationship
       if (!has_same_owner(direct_expr->id, direct_expr->return_id))
-        warning("Should not store result value in a property of another variable!", yylloc);
+        warning("Should not store result value of a function called by a property in another property belongs to another variable!", yylloc);
 
       direct_expr->return_id = adjust_return_id(direct_expr->id, direct_expr->return_id);
       temp_return_id = direct_expr->return_id;
@@ -427,7 +427,7 @@ void parse_funcs(Identifier *caller) {
 
       // Check owner and property relationship
       if (!has_same_owner(direct_expr->id, direct_expr->return_id))
-      warning("Should not store result value in a property of another variable!", yylloc);
+      warning("Should not store result value of a function called by a property in another property belongs to another variable!", yylloc);
 
       direct_expr->return_id = adjust_return_id(direct_expr->id, direct_expr->return_id);
       temp_return_id = direct_expr->return_id;
