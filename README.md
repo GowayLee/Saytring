@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="/image/logo.jpg" alt="Logo" width="400"/>
+  <img src="/image/logo.png" alt="Logo" width="400"/>
   <p>
     A python-based, user-friendly, and experimental programming language for string-processing.
   </p>
