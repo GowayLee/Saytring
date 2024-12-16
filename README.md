@@ -2,6 +2,51 @@
 
 A python-based programming language for string-processing.
 
+---
+
+## Table of Contents
+
+- [Saytring](#saytring)
+  - [Table of Contents](#table-of-contents)
+  - [Intro](#intro)
+  - [Syntax](#syntax)
+    - [1. Variable Declaration](#1-variable-declaration)
+    - [2. Assignment](#2-assignment)
+    - [3. Input and Output](#3-input-and-output)
+    - [4. Function Calls](#4-function-calls)
+    - [5. Dynamic Property](#5-dynamic-property)
+    - [6. Conditional](#6-conditional)
+    - [7. Comparison Operator](#7-comparison-operator)
+  - [Specification of Syntax](#specification-of-syntax)
+    - [Syntactic Sugar](#syntactic-sugar)
+      - [1. I/O Expression](#1-io-expression)
+      - [2. Chain Call](#2-chain-call)
+      - [3. Arithmetic for Strings](#3-arithmetic-for-strings)
+  - [Type System](#type-system)
+    - [1. "Here is **NO TYPE** anymore"](#1-here-is-no-type-anymore)
+    - [2. Type Checking](#2-type-checking)
+    - [3. Types](#3-types)
+    - [4. Type Rules](#4-type-rules)
+      - [1. Declaration](#1-declaration)
+      - [2. Assignment](#2-assignment-1)
+      - [3. Identifier](#3-identifier)
+      - [4. Function Call](#4-function-call)
+      - [5. Conditional](#5-conditional)
+      - [6. Comparison](#6-comparison)
+      - [7. Arithmetic](#7-arithmetic)
+      - [8. Constant](#8-constant)
+      - [9. Output](#9-output)
+      - [10. Input](#10-input)
+    - [Runtime Environment](#runtime-environment)
+      - [Type Management](#type-management)
+      - [Error Handling](#error-handling)
+      - [Dynamic Properties](#dynamic-properties)
+      - [Built-in Functions](#built-in-functions)
+      - [Arithmetic and Comparison Operations](#arithmetic-and-comparison-operations)
+      - [Input/Output Operations](#inputoutput-operations)
+
+---
+
 ## Intro
 
 Saytring is an experimental language with hybrid features designed to provide users with an intuitive and natural experience for string manipulation.
@@ -248,7 +293,7 @@ my_var's last_result do reverse on re_str
 my_var's re_str do count_digit on last_result
 ```
 
-### 3. Arithmetic for Strings
+#### 3. Arithmetic for Strings
 
 Arithmetic expressions such as `expression + expression` and `expression - expression` were originally designed for integers. Here, we introduce a syntactic sugar to extend these operations to work with strings.
 
@@ -479,6 +524,189 @@ This approach ensures that users consider the possibility that the input receive
 
 ---
 
-## Runtime
+### Runtime Environment
 
-TODO:
+The Saytring runtime environment is implemented in Python, providing a robust and flexible execution platform for the Saytring programming language. This runtime system is designed to handle the dynamic nature of Saytring, ensuring that string manipulation and other operations are performed efficiently and reliably.
+
+The runtime includes a comprehensive set of built-in functions and utilities that support the core features of Saytring, such as string processing, input/output operations, and dynamic property management. These functions are encapsulated within a specialized class, `SaytringVar`, which represents variables in Saytring. This class manages the internal state of variables, including their values and types, and provides methods for casting and type conversion to maintain consistency and safety within the runtime environment.
+
+Key components of the runtime include:
+
+- **Type Management**: Automatic conversion and casting of data types.
+- **Error Handling**: Robust mechanisms to prevent runtime crashes.
+- **Dynamic Properties**: Flexible storage for additional data.
+- **Built-in Functions**: A rich library of string-processing functions.
+- **Arithmetic and Comparison**: Support for flexible operations.
+- **Input/Output**: Interactive functions for user interaction.
+
+The following is detailed description.
+
+#### Type Management
+
+The runtime handles the conversion of various data types (e.g., integers, booleans, lists) into strings, ensuring that all variables are treated as strings within Saytring. This approach simplifies the language design while maintaining flexibility. For example, the `cast_null_to_str()`, `cast_null_to_int()`, and `cast_null_to_bool()` functions are used to convert `NULL_Type` variables to their respective types.
+
+```python
+def cast_null_to_str(s: SaytringVar, t: SaytringVar) -> None:
+    if s.get_type() is not DataType.NULL_TYPE:
+        s.print_warn_msg("Saytring: Try to perform NULL_Type type cast on a non-NULL_Type variable")
+        t.set_value(False)
+    # Update _value
+    result: str
+    if isinstance(s.get_value(), int):
+        result = str(s.get_value())
+    elif isinstance(s.get_value(), str):
+        result = cast(str, s.get_value())
+    elif isinstance(s.get_value(), bool):
+        result = "True" if s.get_value() else "False"
+    elif isinstance(s.get_value(), list):
+        result = "[" + ", ".join(map(str, cast(List[str], s.get_value()))) + "]"
+    else:
+        t.set_value(False)
+        return
+    t.set_value(True)
+    s.set_value(result)
+```
+
+#### Error Handling
+
+The runtime includes mechanisms for detecting and handling type mismatches and other potential errors, providing warnings and skipping steps when necessary to prevent runtime crashes. For instance, if a function expects a string but receives an integer, the runtime will print a warning message and skip the operation, ensuring that the program can continue executing without interruption.
+
+```python
+def reverse(s: SaytringVar, t: SaytringVar) -> None:
+    """
+    Reverse the string in 's' and store the result in 't'.
+    """
+    try:
+        t.set_value(s.cast_str()[::-1])
+    except TypeError:
+        print("Saytring: Step skipped due to type casting error")
+        return
+```
+
+#### Dynamic Properties
+
+The runtime supports dynamic properties, allowing variables to store additional information and enabling more complex operations and data manipulations. For example, the `has` keyword in Saytring is implemented in the runtime to create and manage these properties, which can store the results of function calls or other data.
+
+```python
+class SaytringVar:
+    def __init__(self, value=None, tp=DataType.NULL_TYPE):
+        self._value = value
+        self._type = tp
+        self._str_value = self._to_string()
+
+    def _to_string(self) -> str:
+        if self._type == DataType.INT:
+            return str(self._value)
+        if self._type == DataType.STRING:
+            return cast(str, self._value)
+        if self._type == DataType.BOOL:
+            return "True" if self._value else "False"
+        if self._type == DataType.LIST:
+            return "[" + ", ".join(map(str, cast(list, self._value))) + "]"
+        if self._type == DataType.NULL_TYPE:
+            return "None"
+        return "None"  # Should never reach here
+```
+
+#### Built-in Functions
+
+A rich library of functions is provided to perform common string operations, such as concatenation, substring extraction, reversal, and more. These functions are designed to be intuitive and easy to use, aligning with Saytring's goal of providing a natural and user-friendly programming experience.
+
+Here are a few examples of built-in functions:
+
+- **`reverse()`**: Reverses a string.
+- **`concat()`**: Concatenates two strings.
+- **`substring()`**: Extracts a substring from a string.
+- **`get_length()`**: Returns the length of a string.
+
+```python
+def reverse(s: SaytringVar, t: SaytringVar) -> None:
+    """
+    Reverse the string in 's' and store the result in 't'.
+    """
+    t.set_value(s.cast_str()[::-1])
+
+def concat(s1: SaytringVar, s2: SaytringVar | str, t: SaytringVar) -> None:
+    """
+    Concatenate the string in 's1' with the string in 's2' and store the result in 't'.
+    """
+    try:
+        t.set_value(s1.cast_str() + (s2 if isinstance(s2, str) else s2.cast_str()))
+    except TypeError:
+        print("Saytring: Step skipped due to type casting error")
+
+def substring(s: SaytringVar, start: SaytringVar | int, end: SaytringVar | int, t: SaytringVar) -> None:
+    """
+    Extract a substring from 's' starting at 'start' and ending at 'end', and store the result in 't'.
+    """
+    try:
+        start = start.cast_int() if isinstance(start, SaytringVar) else start
+        end = end.cast_int() if isinstance(end, SaytringVar) else end
+        t.set_value(s.cast_str()[start:end])
+    except TypeError:
+        print("Saytring: Step skipped due to type casting error")
+        return
+```
+
+#### Arithmetic and Comparison Operations
+
+The runtime also supports arithmetic and comparison operations, such as addition, subtraction, and various comparison operators (`lt`, `gt`, `eq`, etc.). These operations are implemented to handle both string and integer types, allowing for flexible and intuitive expressions in Saytring.
+
+```python
+def arithmetic(s1: SaytringVar | int | str, s2: SaytringVar | int | str, op: str) -> int | str:
+    def _get_value(s: SaytringVar | str | int) -> int | str | None:
+        if isinstance(s, str) or isinstance(s, int):
+            return s
+        elif isinstance(s, SaytringVar):
+            if s.get_type() is DataType.STRING:
+                return s.cast_str()
+            elif s.get_type() is DataType.INT:
+                return s.cast_int()
+            else:
+                print("Saytring: Try to perform arithmetic operation on a non-String/Int variable, return 0 by default.")
+                return None
+
+    t1 = _get_value(s1)
+    t2 = _get_value(s2)
+
+    if t1 is None or t2 is None:
+        return 0
+
+    if isinstance(t1, str) and isinstance(t2, str):
+        if op == "ADD":
+            return _concat(t1, t2)
+        if op == "SUB":
+            return _remove_tail(t1, t2)
+
+    if isinstance(t1, int) and isinstance(t2, int):
+        if op == "SUB":
+            return t1 - t2
+        if op == "ADD":
+            return t1 + t2
+
+    print("Saytring: Cannot perform arithmetic operation between int and string, return 0 by default")
+    print("Saytring: Step skipped due to type casting error")
+    return 0
+```
+
+#### Input/Output Operations
+
+The runtime provides functions for handling input and output, such as `ask()` and `say()`. The `ask()` function prompts the user for input and stores it in a variable, while the `say()` function outputs data to the console. These functions are essential for creating interactive Saytring programs.
+
+```python
+def ask(t: SaytringVar) -> None:
+    """
+    Prompt the user for input and store the result in 't'.
+    """
+    t.set_NULL_value(input())
+
+def say(s: SaytringVar | str | int | bool) -> None:
+    """
+    Print the value of 's'.
+    """
+    try:
+        print(s.cast_str() if isinstance(s, SaytringVar) else s)
+    except TypeError:
+        print("Saytring: Step skipped due to type casting error")
+        return
+```
