@@ -1,49 +1,51 @@
-# Saytring
-
-A python-based programming language for string-processing.
+<div align="center">
+  <img src="/image/logo.jpg" alt="Logo" width="400"/>
+  <p>
+    A python-based, user-friendly, and experimental programming language for string-processing.
+  </p>
+</div>
 
 ---
 
 ## Table of Contents
 
-- [Saytring](#saytring)
-  - [Table of Contents](#table-of-contents)
-  - [Intro](#intro)
-  - [Syntax](#syntax)
-    - [1. Variable Declaration](#1-variable-declaration)
-    - [2. Assignment](#2-assignment)
-    - [3. Input and Output](#3-input-and-output)
-    - [4. Function Calls](#4-function-calls)
-    - [5. Dynamic Property](#5-dynamic-property)
-    - [6. Conditional](#6-conditional)
-    - [7. Comparison Operator](#7-comparison-operator)
-  - [Specification of Syntax](#specification-of-syntax)
-    - [Syntactic Sugar](#syntactic-sugar)
-      - [1. I/O Expression](#1-io-expression)
-      - [2. Chain Call](#2-chain-call)
-      - [3. Arithmetic for Strings](#3-arithmetic-for-strings)
-  - [Type System](#type-system)
-    - [1. "Here is **NO TYPE** anymore"](#1-here-is-no-type-anymore)
-    - [2. Type Checking](#2-type-checking)
-    - [3. Types](#3-types)
-    - [4. Type Rules](#4-type-rules)
-      - [1. Declaration](#1-declaration)
-      - [2. Assignment](#2-assignment-1)
-      - [3. Identifier](#3-identifier)
-      - [4. Function Call](#4-function-call)
-      - [5. Conditional](#5-conditional)
-      - [6. Comparison](#6-comparison)
-      - [7. Arithmetic](#7-arithmetic)
-      - [8. Constant](#8-constant)
-      - [9. Output](#9-output)
-      - [10. Input](#10-input)
-    - [Runtime Environment](#runtime-environment)
-      - [Type Management](#type-management)
-      - [Error Handling](#error-handling)
-      - [Dynamic Properties](#dynamic-properties)
-      - [Built-in Functions](#built-in-functions)
-      - [Arithmetic and Comparison Operations](#arithmetic-and-comparison-operations)
-      - [Input/Output Operations](#inputoutput-operations)
+- [Table of Contents](#table-of-contents)
+- [Intro](#intro)
+- [Syntax](#syntax)
+  - [1. Variable Declaration](#1-variable-declaration)
+  - [2. Assignment](#2-assignment)
+  - [3. Input and Output](#3-input-and-output)
+  - [4. Function Calls](#4-function-calls)
+  - [5. Dynamic Property](#5-dynamic-property)
+  - [6. Conditional](#6-conditional)
+  - [7. Comparison Operator](#7-comparison-operator)
+- [Specification of Syntax](#specification-of-syntax)
+  - [Syntactic Sugar](#syntactic-sugar)
+    - [1. I/O Expression](#1-io-expression)
+    - [2. Chain Call](#2-chain-call)
+    - [3. Arithmetic for Strings](#3-arithmetic-for-strings)
+- [Type System](#type-system)
+  - [1. "Here is **NO TYPE** anymore"](#1-here-is-no-type-anymore)
+  - [2. Type Checking](#2-type-checking)
+  - [3. Types](#3-types)
+  - [4. Type Rules](#4-type-rules)
+    - [1. Declaration](#1-declaration)
+    - [2. Assignment](#2-assignment-1)
+    - [3. Identifier](#3-identifier)
+    - [4. Function Call](#4-function-call)
+    - [5. Conditional](#5-conditional)
+    - [6. Comparison](#6-comparison)
+    - [7. Arithmetic](#7-arithmetic)
+    - [8. Constant](#8-constant)
+    - [9. Output](#9-output)
+    - [10. Input](#10-input)
+  - [Runtime Environment](#runtime-environment)
+    - [Type Management](#type-management)
+    - [Error Handling](#error-handling)
+    - [Dynamic Properties](#dynamic-properties)
+    - [Built-in Functions](#built-in-functions)
+    - [Arithmetic and Comparison Operations](#arithmetic-and-comparison-operations)
+    - [Input/Output Operations](#inputoutput-operations)
 
 ---
 
