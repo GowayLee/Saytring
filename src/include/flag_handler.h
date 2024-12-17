@@ -17,6 +17,7 @@ struct Flag {
 const std::vector<Flag> flags = {
     {"--input", 'i', "Specify the input file path", true, "<None>"},
     {"--output", 'o', "Specify the output file path", true, "output.py"},
+    {"--runtime", 't', "Specify the runtime file path", true, "../runtime/runtime.py"},
     {"--debug", 'd', "Enable debug mode for detailed logs", false, "false"},
     {"--run", 'r', "Run the program automatically after compilation", false,
      "false"},

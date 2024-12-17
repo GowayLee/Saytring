@@ -64,7 +64,9 @@ int main(int argc, char **argv) {
   output_filename = const_cast<char *>(parsed_flags["--output"].empty()
                                            ? "output.py"
                                            : parsed_flags["--output"].c_str());
-
+  runtime_filename = const_cast<char *>(
+      parsed_flags["--runtime"].empty() ? "<stdin>"
+                                        : parsed_flags["--runtime"].c_str());
   FILE *inputFile = stdin;
   if (input_filename != std::string("<stdin>")) {
     inputFile = fopen(input_filename, "r");
@@ -110,7 +112,12 @@ int main(int argc, char **argv) {
   // Run code if --run flag is set to "true"
   if (parsed_flags["--run"] == "true") {
     printf("\n--------Saytring v%s--------\n", _VERSION_);
-    system(("python " + std::string(output_filename)).c_str());
+    int result = system(("python " + std::string(output_filename)).c_str());
+    if (result != 0) {
+      printf("Error: Failed to execute the generated Python script.\n");
+      printf("Suggestion: Ensure Python is installed and accessible in your "
+             "PATH. Check the script for any runtime errors.\n");
+    }
   }
 
   return 0;
