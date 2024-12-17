@@ -10,7 +10,7 @@ CXXINCLUDE = -I./include -I.
 CXXFLAGS = -Wno-write-strings -g ${CXXINCLUDE}
 BISONFLAGS = -d -y
 
-OBJS = main.o lexer.o parser.o symtab.o util.o semant.o cgen.o core_func.o
+OBJS = main.o lexer.o parser.o symtab.o util.o semant.o cgen.o core_func.o flag_handler.o
 
 TARGET = saytringc
 
@@ -26,8 +26,11 @@ build: $(TARGET)
 $(TARGET): $(OBJS)
 	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS)
 
-main.o: main.cc ${INCLUDEDIR}/AST.h parser.tab.h
+main.o: main.cc ${INCLUDEDIR}/AST.h ${INCLUDEDIR}/flag_handler.h parser.tab.h
 	$(CXX) $(CXXFLAGS) -c main.cc
+
+flag_handler.o: ${INCLUDEDIR}/flag_handler.h
+	$(CXX) $(CXXFLAGS) -c flag_handler.cc
 
 cgen.o: cgen.cc ${INCLUDEDIR}/cgen.h ${INCLUDEDIR}/core_func.h ${INCLUDEDIR}/AST.h ${INCLUDEDIR}/symtab.h ${INCLUDEDIR}/template.h
 	$(CXX) $(CXXFLAGS) -c cgen.cc
