@@ -31,19 +31,25 @@ void Program::code_generation() {
   // Write into output_file
   std::ofstream out_file(output_filename);
   std::ifstream runtime_file(runtime_filename);
+
+  if (!runtime_file.is_open()) {
+    std::cerr << "Error: Missing runtime file: " << runtime_filename << std::endl;
+    return;
+  }
+
   // Copy runtime into output_file
   out_file << runtime_file.rdbuf();
 
   if (!runtime_file && !out_file) {
-    std::cerr << "Error in copy Runtime file to output file!" << std::endl;
+    std::cerr << "Error in copying Runtime file to output file!" << std::endl;
     return;
   }
 
-  // Input geneated code into output_file
+  // Input generated code into output_file
   if (out_file.is_open()) {
     out_file.write(generated_code.str().c_str(), generated_code.str().size());
     out_file.close();
-    std::cout << "Generate code to " << output_filename << std::endl;
+    std::cout << "Generated code to " << output_filename << std::endl;
   } else {
     std::cerr << "Unable to open file: " << output_filename << std::endl;
   }
