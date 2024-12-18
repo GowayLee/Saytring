@@ -400,7 +400,10 @@ def reverse(s: SaytringVar, t: SaytringVar) -> None:
     """
     Reverse the string in 's' and store the result in 't'.
     """
-    t.set_value(s.cast_str()[::-1])
+    try:
+        t.set_value(s.cast_str()[::-1])
+    except TypeError:
+        print(STEP_SKIP_MSG)
 
 
 def concat(s1: SaytringVar, s2: SaytringVar | str, t: SaytringVar) -> None:
@@ -427,16 +430,23 @@ def remove_tail(s: SaytringVar, tail: SaytringVar | str, t: SaytringVar) -> None
     """
     Remove the 'tail' from the end of the string in 's' and store the result in 't'.
     """
-    s_str: str = s.cast_str()
-    tail_str: str = tail if isinstance(tail, str) else tail.cast_str()
-    result: str = s_str[: -len(tail_str)] if s_str.endswith(tail_str) else s_str
-    t.set_value(result)
+    try:
+        s_str: str = s.cast_str()
+        tail_str: str = tail if isinstance(tail, str) else tail.cast_str()
+        result: str = s_str[: -len(tail_str)] if s_str.endswith(tail_str) else s_str
+        t.set_value(result)
+    except TypeError:
+        print(STEP_SKIP_MSG)
 
 
 def _remove_tail(s: SaytringVar | str, tail: SaytringVar | str) -> str:
-    s_str: str = s if isinstance(s, str) else s.cast_str()
-    tail_str: str = tail if isinstance(tail, str) else tail.cast_str()
-    return s_str[: -len(tail_str)] if s_str.endswith(tail_str) else s_str
+    try:
+        s_str: str = s if isinstance(s, str) else s.cast_str()
+        tail_str: str = tail if isinstance(tail, str) else tail.cast_str()
+        return s_str[: -len(tail_str)] if s_str.endswith(tail_str) else s_str
+    except TypeError:
+        print(STEP_SKIP_MSG)
+        return ""
 
 
 def substring(
