@@ -1038,7 +1038,28 @@ The Saytring compiler accepts several command-line flags to customize its behavi
 
    - Use `custom_runtime.py` as the runtime environment for the generated Python code.
 
-3. **Display help and version information:**
+3. **Enable debug mode and compile a Saytring program:**
+
+   ```bash
+   ./saytringc --input=../test/sin.say --output=output.py --debug
+   ```
+
+   This command will:
+
+   - Enable debug mode, which provides detailed logs during the compilation process.
+   - Generate the Python code in `output.py`.
+
+4. **Compile a Saytring program and specify a different output file:**
+
+   ```bash
+   ./saytringc --input=../test/sin.say --output=custom_output.py
+   ```
+
+   This command will:
+
+   - Generate the Python code in `custom_output.py` instead of the default `output.py`.
+
+5. **Display help and version information:**
 
    ```bash
    ./saytringc --help
