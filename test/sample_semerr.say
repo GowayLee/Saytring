@@ -1,0 +1,6 @@
+# Define variable `var`
+define var as (0)
+
+# Print variable `var2`
+# `var2` is undefined, leads to semant error
+say(var2)

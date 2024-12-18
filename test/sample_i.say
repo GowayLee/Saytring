@@ -1,0 +1,34 @@
+# Define a variable named var
+# Initialize it with "Define variable var."
+define var as ("Define variable var.")
+
+# Print `var` on screen
+say(var)
+
+# Declare properties of `var`
+var has [length, reverse_str, sub_str]
+
+# 1. Reverse `var` and store the result to `var's reverse_str`
+var do reverse on reverse_str
+
+# Print `var's reverse_str` on screen with prefix by function `concat`.
+say("The reversed string is " do concat using [var's reverse_str])
+
+# 2. Get length of var and store the result to `var's length`
+var do get_length on length
+
+# Convert `var's length` from int type to string type
+convert var's length to string
+
+# Print `var's length` on screen with prefix by string arith_operation
+say("The length of var is " + var's length;)
+
+# 3. Reverse `var` for 4 times and get substring from 3 to 7.
+#    And store the result to `var's sub_str`
+var do reverse
+ -> do reverse
+ -> do reverse -> do reverse
+ -> do substring using [3, 7] on sub_str
+
+# Print `var's sub_str` on screen with prefix.
+say("The substring of var is " + var's sub_str;)

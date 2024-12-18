@@ -1,0 +1,15 @@
+# Define variable named `var`
+define var as (0)
+
+# Ask user to input a string
+ask "Enter a string: " as var
+
+# Do reverse (will report warning since forgetting type cast)
+var do reverse
+
+# Compare `var's last_result` with 100 and print the result
+# Will report warning since performing arith_opertaion between string and integer
+say(var's last_result gt 100;)
+
+# Get substring of var's last_result using wrong arguments
+var's last_result do substring using [var, 2]

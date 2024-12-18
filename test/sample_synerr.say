@@ -1,0 +1,11 @@
+# Define variable `var`
+define var as ("Hello world!")
+
+# Declare properties of `var`
+# `have` is invalid token, leads to Syntax Error
+var have [prop1, prop2, prop3]
+
+# `does` is invalid token, leads to Syntax Error
+var does reverse on prop1
+
+say(var)

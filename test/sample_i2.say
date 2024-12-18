@@ -1,0 +1,37 @@
+# Define a variable named var
+# Initialize it with "Define variable var."
+define var as ("Define variable var.")
+
+# Declare properties of `var`
+var has [length, reverse_str, det]
+
+# Get user input to var
+ask "Please enter a string " as var
+
+# Convert var from NULL_Type to string
+convert var to string
+
+# 1. Reverse `var` and store the result to `var's reverse_str`
+var do reverse on reverse_str
+
+# Print `var's reverse_str` on screen with prefix by function `concat`.
+say("The reversed string is " do concat using [var's reverse_str])
+
+# 2. Determine whether `var` is palindrome or not
+var do is_palindrome on det
+
+if var's det then
+  say("It is a palindrome!")
+else
+  say("It is not a palindrome!")
+endif
+
+# 3. Get length of var and store the result to `var's length`
+var do get_length on length
+
+# Convert `var's length` from int type to string type
+convert var's length to string
+
+# Print `var's length` on screen with prefix by string arith_operation
+say("The length of var is " + var's length;)
+
