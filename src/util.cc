@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <iostream>
 
+// TODO: Optimize this part using std::map
 char *token_to_string(int tok) {
   switch (tok) {
   case 0:
@@ -31,6 +32,12 @@ char *token_to_string(int tok) {
     break;
   case (DO):
     return ("DO");
+    break;
+  case (TO):
+    return ("TO");
+    break;
+  case (CONVERT):
+    return ("CONVERT");
     break;
   case (ID):
     return ("ID");

@@ -28,6 +28,7 @@ char *input_filename = "<stdin>";
 char *output_filename = "output.py";
 char *runtime_filename = "../runtime/runtime.py";
 
+int syntax_error_count = 0;
 int semant_error_count = 0;
 int semant_warn_count = 0;
 
@@ -78,7 +79,7 @@ int main(int argc, char **argv) {
   yyin = inputFile;
 
   // Syntax Parsing
-  if (yyparse() != 0) {
+  if (yyparse() != 0 || syntax_error_count > 0) {
     printf("Compilation terminated due to syntax errors.\n");
     return 0;
   }

@@ -7,6 +7,7 @@
 #include "util.h"
 
 extern char *input_filename;
+extern int syntax_error_count;
 
 // YYLTYPE is defined in AST.h
 #define YYLTYPE_IS_DECLARED 1
@@ -159,6 +160,11 @@ decl_expr : DEFINE ID AS '(' expression ')'
             global_expr_list->push_back(new Property_Decl_Expr(new Single_Identifier($2, @2), LAST_RESULT, @2));
             has_pushed_back = true;
           }
+          | DEFINE error ')'
+          {
+            yyerror("Error in variable declaration", yylloc);
+            yyerrok;
+          }
           ;
 
 property_decl_expr : identifier HAS '[' dummy_identifier_list ']'
@@ -171,6 +177,11 @@ property_decl_expr : identifier HAS '[' dummy_identifier_list ']'
                        }
                        has_pushed_back = true;
                      }
+                   }
+                   | error ']'
+                   {
+                     yyerror("Error in property declaration", yylloc);
+                     yyerrok;
                    }
                    ;
 
@@ -198,6 +209,11 @@ assi_expr : SET identifier AS '(' expression ')'
               $$ = new Assi_Expr($2, temp_return_id, @2);
               has_pushed_back = false;
             }
+          }
+          | SET error ')'
+          {
+            yyerror("Error in assignment", yylloc);
+            yyerrok;
           }
           ;
 
@@ -306,6 +322,11 @@ cond_expr : IF expression THEN expression ELSE expression ENDIF
           {
             $$ = new Cond_Expr($2, $4, @2);
           }
+          | error ENDIF
+          {
+            yyerror("Error in conditional expression", yylloc);
+            yyerrok;
+          }
           ;
 
 comp_op : GT
@@ -397,6 +418,7 @@ void yyerror(const char *s, YYLTYPE loc) {
             << ": " << s << " at or near ";
   print_token(yychar);
   std::cerr << std::endl;
+  syntax_error_count++;
 }
 
 void parse_funcs(Identifier *caller) {

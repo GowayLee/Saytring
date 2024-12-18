@@ -60,8 +60,7 @@ parser.tab.h parser.tab.cc: parser.y
 	mv y.tab.h parser.tab.h
 
 clean:
-	cd ${BUILDDIR} && rm -f $(TARGET) $(OBJS) parser.tab.cc parser.tab.h lexer.yy.cc
-	rm -f $(TARGET) $(OBJS) parser.tab.cc parser.tab.h lexer.yy.cc output.py
+	rm -f $(TARGET) $(OBJS) parser.tab.cc parser.tab.h lexer.yy.cc *.py
 
 dotest:
 	${BUILDDIR}/$(TARGET) ../test/sin.say || ./$(TARGET) ../test/sin.say
