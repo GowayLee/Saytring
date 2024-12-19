@@ -5,126 +5,54 @@
 #include <ctype.h>
 #include <iomanip>
 #include <iostream>
+#include <map>
 
-// TODO: Optimize this part using std::map
-char *token_to_string(int tok) {
-  switch (tok) {
-  case 0:
-    return ("EOF");
-    break;
-  case (DEFINE):
-    return ("DEFINE");
-    break;
-  case (USING):
-    return ("USING");
-    break;
-  case (ON):
-    return ("ON");
-    break;
-  case (ENDIF):
-    return ("ENDIF");
-    break;
-  case (ASK):
-    return ("ASK");
-    break;
-  case (SAY):
-    return ("SAY");
-    break;
-  case (DO):
-    return ("DO");
-    break;
-  case (TO):
-    return ("TO");
-    break;
-  case (CONVERT):
-    return ("CONVERT");
-    break;
-  case (ID):
-    return ("ID");
-    break;
-  case (AS):
-    return ("AS");
-    break;
-  case (SET):
-    return ("SET");
-    break;
-  case (HAS):
-    return ("HAS");
-    break;
-  case (IF):
-    return ("IF");
-    break;
-  case (THEN):
-    return ("THEN");
-    break;
-  case (ELSE):
-    return ("ELSE");
-    break;
-  case (STR_CONST):
-    return ("STR_CONST");
-    break;
-  case (INT_CONST):
-    return ("INT_CONST");
-    break;
-  case (BOOL_CONST):
-    return ("BOOL_CONST");
-    break;
-  case (BELONG):
-    return ("\'s");
-    break;
-  case (CHAIN):
-    return ("->");
-    break;
-  case (GT):
-    return ("gt");
-    break;
-  case (LT):
-    return ("lt");
-    break;
-  case (GE):
-    return ("ge");
-    break;
-  case (LE):
-    return ("le");
-    break;
-  case (EQ):
-    return ("eq");
-    break;
-  case (NE):
-    return ("ne");
-    break;
-  case (ERROR):
-    return ("ERROR");
-    break;
-  case '+':
-    return ("'+'");
-    break;
-  case '-':
-    return ("'-'");
-    break;
-  case ',':
-    return ("','");
-    break;
-  case ';':
-    return ("';'");
-    break;
-  case '(':
-    return ("'('");
-    break;
-  case ')':
-    return ("')'");
-    break;
-  case '[':
-    return ("'['");
-    break;
-  case ']':
-    return ("']'");
-    break;
-  default:
-    return ("<Invalid Token>");
+std::map<int, const char *> token_map = {{0, "EOF"},
+                                         {DEFINE, "DEFINE"},
+                                         {USING, "USING"},
+                                         {ON, "ON"},
+                                         {ENDIF, "ENDIF"},
+                                         {ASK, "ASK"},
+                                         {SAY, "SAY"},
+                                         {DO, "DO"},
+                                         {TO, "TO"},
+                                         {CONVERT, "CONVERT"},
+                                         {ID, "ID"},
+                                         {AS, "AS"},
+                                         {SET, "SET"},
+                                         {HAS, "HAS"},
+                                         {IF, "IF"},
+                                         {THEN, "THEN"},
+                                         {ELSE, "ELSE"},
+                                         {STR_CONST, "STR_CONST"},
+                                         {INT_CONST, "INT_CONST"},
+                                         {BOOL_CONST, "BOOL_CONST"},
+                                         {BELONG, "\'s"},
+                                         {CHAIN, "->"},
+                                         {GT, "gt"},
+                                         {LT, "lt"},
+                                         {GE, "ge"},
+                                         {LE, "le"},
+                                         {EQ, "eq"},
+                                         {NE, "ne"},
+                                         {ERROR, "ERROR"},
+                                         {'+', "'+'"},
+                                         {'-', "'-'"},
+                                         {',', "','"},
+                                         {';', "';'"},
+                                         {'(', "'('"},
+                                         {')', "')'"},
+                                         {'[', "'['"},
+                                         {']', "']'"}};
+
+const char *token_to_string(int tok) {
+  auto it = token_map.find(tok);
+  if (it != token_map.end()) {
+    return it->second;
+  } else {
+    return "<Invalid Token>";
   }
 }
-
 void print_escaped_string(ostream &str, const char *s) {
   while (*s) {
     switch (*s) {
