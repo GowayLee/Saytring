@@ -18,9 +18,7 @@ var do reverse on reverse_str
 say("The reversed string is " do concat using [var's reverse_str])
 
 # 2. Determine whether `var` is palindrome or not
-var do is_palindrome on det
-
-if var's det then
+if var do is_palindrome then
   say("It is a palindrome!")
 else
   say("It is not a palindrome!")
@@ -34,4 +32,3 @@ convert var's length to string
 
 # Print `var's length` on screen with prefix by string arith_operation
 say("The length of var is " + var's length;)
-

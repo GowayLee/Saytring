@@ -57,12 +57,12 @@ class SaytringVar:
         return "None"  # Should never reach here
 
     def set_value(self, value: Union[int, str, bool, list[str]]):
-        if isinstance(value, int):
+        if isinstance(value, bool):
+            self._type = DataType.BOOL
+        elif isinstance(value, int):
             self._type = DataType.INT
         elif isinstance(value, str):
             self._type = DataType.STRING
-        elif isinstance(value, bool):
-            self._type = DataType.BOOL
         elif isinstance(value, list):
             self._type = DataType.LIST
         else:
@@ -114,7 +114,7 @@ class SaytringVar:
 
     def cast_bool(self) -> bool:
         if self._type is not DataType.BOOL:
-            self.print_warn_msg("SaytringL Try to cast a non-bool variable to bool")
+            self.print_warn_msg("Saytring: Try to cast a non-bool variable to bool")
             raise TypeError
         return cast(bool, self._value)
 
@@ -128,9 +128,9 @@ class SaytringVar:
             print('Saytring: Affected var: "' + self._str_value[:WARN_MSG_STRLEN] + '"')
 
 
-#############################################
-########### Pre-defined Variables ############
-#############################################
+############################################
+########## Pre-defined Variables ###########
+############################################
 
 _anonymous = SaytringVar()
 _anonymous_last_result = SaytringVar()
@@ -296,6 +296,20 @@ def cast_bool_to_int(s: SaytringVar, t: SaytringVar) -> None:
         t.set_value(0)
 
     t.set_value(True)
+
+
+def _bool_wrap(s: SaytringVar | bool) -> bool:
+    if isinstance(s, SaytringVar):
+        try:
+            return s.cast_bool()
+        except TypeError:
+            print("Saytring: Due to type error, _bool_wrap return False by default")
+            return False
+    elif isinstance(s, bool):
+        return s
+    else:
+        print("Saytring: Unsupported type in _bool_warp, return False by default")
+        return False
 
 
 #############################################
