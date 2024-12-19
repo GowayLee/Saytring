@@ -8,12 +8,13 @@
 
 extern char *input_filename;
 extern int syntax_error_count;
+extern int syntax_warn_count;
 
 // YYLTYPE is defined in AST.h
 #define YYLTYPE_IS_DECLARED 1
 #define YYLTYPE_IS_TRIVIAL 1
 
-void warning(const char *s, YYLTYPE loc);
+void yywarn(const char *s, YYLTYPE loc);
 void yyerror(const char *s, YYLTYPE loc);
 void yyerror(const char *s);
 
@@ -173,7 +174,7 @@ decl_expr : DEFINE ID AS '(' expression ')'
 property_decl_expr : identifier HAS '[' dummy_identifier_list ']'
                    {
                      if ($1->has_owner())
-                       warning("Cannot declare property of a property!", yylloc);
+                       yywarn("Cannot declare property of a property!", @1);
                      else {
                        for (Symbol *property_name : *temp_identifier_list) {
                          global_expr_list->push_back(new Property_Decl_Expr($1, property_name, yylloc));
@@ -285,13 +286,13 @@ dummy_chain_call_list : func_expr
                       {
                         temp_call_list->push_back($1);
                       }
-                      // FIXME: Sequencial error
                       | '(' IF expression THEN func_expr ')'
                       {
                         temp_call_list->clear();
                         if (!has_pushed_back)
                           temp_call_list->push_back(new Cond_Call_Expr($3, $5, @3));
                         else {
+                          yywarn("Nested function call should not appear in chain call", @3);
                           temp_call_list->push_back(new Cond_Call_Expr(temp_return_id, $5, @3));
                           has_pushed_back = false;
                         }
@@ -301,6 +302,7 @@ dummy_chain_call_list : func_expr
                         if (!has_pushed_back)
                           temp_call_list->push_back(new Cond_Call_Expr($3, $5, @3));
                         else {
+                          yywarn("Nested function call should not appear in chain call", @3);
                           temp_call_list->push_back(new Cond_Call_Expr(temp_return_id, $5, @3));
                           has_pushed_back = false;
                         }
@@ -462,10 +464,11 @@ io_expr : ASK expression AS identifier
 
 %%
 
-void warning(const char *s, YYLTYPE loc) {
+void yywarn(const char *s, YYLTYPE loc) {
   std::cerr << input_filename << ":" << loc.first_line << ":" << loc.first_column
             << ": Warning: " << s;
   std::cerr << std::endl;
+  syntax_warn_count++;
 }
 
 void yyerror(const char *s) {
@@ -493,7 +496,7 @@ void parse_funcs(Identifier *caller) {
 
       // Check owner and property relationship
       if (!has_same_owner(direct_expr->id, direct_expr->return_id))
-        warning("Should not store result value of a function called by a property in another property belongs to another variable!", yylloc);
+        yywarn("Should not store result value of a function called by a property in another property belongs to another variable!", yylloc);
 
       direct_expr->return_id = adjust_return_id(direct_expr->id, direct_expr->return_id);
       temp_return_id = direct_expr->return_id;
@@ -510,7 +513,7 @@ void parse_funcs(Identifier *caller) {
 
       // Check owner and property relationship
       if (!has_same_owner(direct_expr->id, direct_expr->return_id))
-      warning("Should not store result value of a function called by a property in another property belongs to another variable!", yylloc);
+      yywarn("Should not store result value of a function called by a property in another property belongs to another variable!", yylloc);
 
       direct_expr->return_id = adjust_return_id(direct_expr->id, direct_expr->return_id);
       temp_return_id = direct_expr->return_id;

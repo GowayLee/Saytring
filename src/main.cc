@@ -29,6 +29,7 @@ char *output_filename = "output.py";
 char *runtime_filename = "../runtime/runtime.py";
 
 int syntax_error_count = 0;
+int syntax_warn_count = 0;
 int semant_error_count = 0;
 int semant_warn_count = 0;
 
@@ -79,25 +80,32 @@ int main(int argc, char **argv) {
   yyin = inputFile;
 
   // Syntax Parsing
-  if (yyparse() != 0 || syntax_error_count > 0) {
-    printf("Compilation terminated due to syntax errors.\n");
+  int parse_return = yyparse();
+  if (syntax_warn_count > 0)
+    printf(
+        "%d syntax warnings detected, which may lead to unexpected behavior.\n",
+        syntax_warn_count);
+  if (parse_return != 0 || syntax_error_count > 0) {
+    printf("Compilation terminated due to %d syntax errors.\n",
+           syntax_error_count);
     return 0;
   }
-  printf("No syntax errors detected.\n");
+  printf("No syntax error detected.\n");
   if (inputFile != stdin)
     fclose(inputFile);
 
   // Semantic Check
   ast_root->semant_check();
   if (semant_warn_count > 0)
-    printf("%d warnings detected, which may lead to unexpected behavior.\n",
-           semant_warn_count);
+    printf(
+        "%d semant warnings detected, which may lead to unexpected behavior.\n",
+        semant_warn_count);
   if (semant_error_count > 0) {
     printf("Compilation terminated due to %d semantic errors.\n",
            semant_error_count);
     return 0;
   }
-  printf("No semantic errors detected.\n");
+  printf("No semantic error detected.\n");
 
   // Code generation
   ast_root->code_generation();
