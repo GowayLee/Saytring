@@ -1,12 +1,11 @@
 <div align="center">
-  <img src="/image/logo.png" alt="Logo" width="400"/>
+  <img src="./docs/image/logo.png" alt="Logo" width="400"/>
   <p>
     A python-based, user-friendly, and experimental programming language for string-processing.
   </p>
 </div>
 
 <!-- ![GitHub stars](https://img.shields.io/github/stars/GowayLee/Saytring?style=social) ![GitHub forks](https://img.shields.io/github/forks/GowayLee/Saytring?style=social) ![GitHub release (latest by date)](https://img.shields.io/github/v/release/GowayLee/Saytring) ![GitHub license](https://img.shields.io/github/license/GowayLee/Saytring) -->
-
 
 ---
 
@@ -214,8 +213,15 @@ Condition Expression can be used in Chain Call.
 ```
 my_var has [length]
 my_var do get_length on length
-    -> if digit_count gt 3; then do reverse
+    -> (if digit_count gt 3; then do reverse)
     -> do substring using [1, 3]
+```
+
+Attention: There should not have nested function calls in conditional chain call, such as:
+
+```
+my_var do reverse
+    -> (if my_var do is_palindrome then do reverse) # This will trigger a syntax warning
 ```
 
 ### 7. Comparison Operator
