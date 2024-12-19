@@ -232,23 +232,24 @@ public:
 class Cond_Expr : public Expression {
 public:
   Expression *predictor;
-  Expression *then;
-  Expression *_else;
+  std::vector<Expression *> *_then_list;
+  std::vector<Expression *> *_else_list;
   bool has_else;
-  Cond_Expr(Expression *predictor, Expression *then, Expression *_else,
-            YYLTYPE loc)
+  Cond_Expr(Expression *predictor, std::vector<Expression *> *_then_list,
+            std::vector<Expression *> *_else_list, YYLTYPE loc)
       : Expression(loc) {
     this->predictor = predictor;
-    this->then = then;
-    this->_else = _else;
+    this->_then_list = _then_list;
+    this->_else_list = _else_list;
     this->has_else = true;
   }
 
-  Cond_Expr(Expression *predictor, Expression *then, YYLTYPE loc)
+  Cond_Expr(Expression *predictor, std::vector<Expression *> *_then_list,
+            YYLTYPE loc)
       : Expression(loc) {
     this->predictor = predictor;
-    this->then = then;
-    this->_else = new Nil_Expr(loc);
+    this->_then_list = _then_list;
+    this->_else_list = new std::vector<Expression *>;
     this->has_else = false;
   }
   Symbol *type_check();

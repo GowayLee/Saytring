@@ -4,6 +4,7 @@
 #include "template.h"
 #include <cstring>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <map>
 #include <sstream>
@@ -33,7 +34,8 @@ void Program::code_generation() {
   std::ifstream runtime_file(runtime_filename);
 
   if (!runtime_file.is_open()) {
-    std::cerr << "Error: Missing runtime file: " << runtime_filename << std::endl;
+    std::cerr << "Error: Missing runtime file: " << runtime_filename
+              << std::endl;
     return;
   }
 
@@ -183,14 +185,23 @@ std::string Cond_Call_Expr::code_generate() {
 
 std::string Cond_Expr::code_generate() {
   std::unordered_map<std::string, std::string> params;
+  std::ostringstream buf;
 
   params["condition"] = this->predictor->code_generate();
-  params["_then"] = this->then->code_generate();
+
+  // Generate code of _then_list
+  for (Expression *expr : *_then_list)
+    buf << INTEND << expr->code_generate() << std::endl;
+  params["_then"] = buf.str();
 
   if (!this->has_else)
     return cg->generate("if_statement", params);
 
-  params["_else"] = this->_else->code_generate();
+  // Generate code of else_list
+  buf.str("");
+  for (Expression *expr : *_else_list)
+    buf << INTEND << expr->code_generate() << std::endl;
+  params["_else"] = buf.str();
   return cg->generate("if_else_statement", params);
 }
 

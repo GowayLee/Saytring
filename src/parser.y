@@ -24,8 +24,11 @@ extern int yylex();
 Program *ast_root;            /* the result of the parse  */
 
 // Temp variables
+// TODO: Can use stack to manage `has_pushed_back`
 bool has_pushed_back = false;
+
 std::vector<Expression *> *global_expr_list = new std::vector<Expression *>;
+std::vector<Expression *> *temp_expr_list;
 std::vector<Symbol *> *temp_identifier_list = new std::vector<Symbol *>;
 std::vector<Call_Expr *> *temp_call_list = new std::vector<Call_Expr *>;
 Identifier *temp_return_id;
@@ -61,10 +64,10 @@ Identifier *temp_return_id;
 %type <expression> expression
 %type <identifier> identifier
 %type <symbol> arith_op comp_op
-%type <expressions> expr_list parameter_list
+%type <expressions> expr_list parameter_list then_expr_list else_expr_list
 
 %type <expression> decl_expr property_decl_expr assi_expr io_expr cond_expr
-%type <expression> call_expr cast_expr const_expr
+%type <expression> call_expr cast_expr const_expr predictor_expr
 %type <direct_call_expr> func_expr
 
 /* Precedence declaration */
@@ -185,6 +188,7 @@ property_decl_expr : identifier HAS '[' dummy_identifier_list ']'
                    }
                    ;
 
+// TODO: fix order of collecting
 dummy_identifier_list : ID
                       {
                         temp_identifier_list->clear();
@@ -228,6 +232,7 @@ cast_expr : CONVERT identifier TO TYPE_CONST ON identifier
           ;
 
 // Will collect parameters in inverse order
+// TODO: fix order of collecting
 parameter_list : expression
                {
                  $$ = new std::vector<Expression *>;
@@ -280,14 +285,25 @@ dummy_chain_call_list : func_expr
                       {
                         temp_call_list->push_back($1);
                       }
+                      // FIXME: Sequencial error
                       | '(' IF expression THEN func_expr ')'
                       {
                         temp_call_list->clear();
-                        temp_call_list->push_back(new Cond_Call_Expr($3, $5, @3));
+                        if (!has_pushed_back)
+                          temp_call_list->push_back(new Cond_Call_Expr($3, $5, @3));
+                        else {
+                          temp_call_list->push_back(new Cond_Call_Expr(temp_return_id, $5, @3));
+                          has_pushed_back = false;
+                        }
                       }
                       | '(' IF expression THEN func_expr ')' CHAIN dummy_chain_call_list
                       {
-                        temp_call_list->push_back(new Cond_Call_Expr($3, $5, @3));
+                        if (!has_pushed_back)
+                          temp_call_list->push_back(new Cond_Call_Expr($3, $5, @3));
+                        else {
+                          temp_call_list->push_back(new Cond_Call_Expr(temp_return_id, $5, @3));
+                          has_pushed_back = false;
+                        }
                       }
                       | CHAIN error
                       {
@@ -314,13 +330,56 @@ func_expr : DO ID
           }
           ;
 
-cond_expr : IF expression THEN expression ELSE expression ENDIF
+predictor_expr : IF expression
+               {
+                 if (!has_pushed_back)
+                   $$ = $2;
+                 else {
+                   $$ = temp_return_id;
+                   has_pushed_back = false;
+                 }
+               }
+               ;
+
+then_expr_list : THEN expression
+               {
+                 temp_expr_list = new std::vector<Expression *>;
+                 $$ = temp_expr_list;
+                 if (!has_pushed_back)
+                   $$->push_back($2);
+                 has_pushed_back = false;
+               }
+               | then_expr_list expression
+               {
+                 if (!has_pushed_back)
+                   temp_expr_list->push_back($2);
+                 has_pushed_back = false;
+               }
+               ;
+
+else_expr_list : ELSE expression
+               {
+                 temp_expr_list = new std::vector<Expression *>;
+                 $$ = temp_expr_list;
+                 if (!has_pushed_back)
+                   $$->push_back($2);
+                 has_pushed_back = false;
+               }
+               | else_expr_list expression
+               {
+                 if (!has_pushed_back)
+                   temp_expr_list->push_back($2);
+                 has_pushed_back = false;
+               }
+               ;
+
+cond_expr : predictor_expr then_expr_list else_expr_list ENDIF
           {
-            $$ = new Cond_Expr($2, $4, $6, @2);
+            $$ = new Cond_Expr($1, $2, $3, @1);
           }
-          | IF expression THEN expression ENDIF
+          | predictor_expr then_expr_list ENDIF
           {
-            $$ = new Cond_Expr($2, $4, @2);
+            $$ = new Cond_Expr($1, $2, @1);
           }
           | error ENDIF
           {
@@ -440,7 +499,9 @@ void parse_funcs(Identifier *caller) {
       temp_return_id = direct_expr->return_id;
 
       // Convert Cond_Call_Expr to Cond_Expr
-      global_expr_list->push_back(new Cond_Expr(cond_call_expr->predictor, direct_expr, cond_call_expr->location));
+      auto then_list = new std::vector<Expression *>;
+      then_list->push_back(direct_expr);
+      global_expr_list->push_back(new Cond_Expr(cond_call_expr->predictor, then_list, cond_call_expr->location));
     } else {
       Direct_Call_Expr *direct_expr = static_cast<Direct_Call_Expr *>(expr);
 

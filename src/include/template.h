@@ -1,6 +1,8 @@
 #ifndef _TEMPLATE_H
 #define _TEMPLATE_H
 
+#define INTEND "    "
+
 // Definition of Python code templates for code generation
 #define TEMPLATE_COMMENT "# {content}"
 #define TEMPLATE_STRING_CONST "\"{value}\""
@@ -13,9 +15,9 @@
 #define TEMPLATE_VAR_DECL "{name} = SaytringVar({init}, DataType.{type})"
 #define TEMPLATE_PROP_DECL "{owner}_{name} = SaytringVar()"
 #define TEMPLATE_ASSIGN "{id}.set_value({expr})"
-#define TEMPLATE_IF_STATEMENT "if {condition}:\n    {_then}"
+#define TEMPLATE_IF_STATEMENT "if _bool_wrap({condition}):\n{_then}"
 #define TEMPLATE_IF_ELSE_STATEMENT                                             \
-  "if {condition}:\n    {_then}\nelse:\n    {_else}"
+  "if _bool_wrap({condition}):\n{_then}else:\n{_else}"
 
 #define COMP_FUNC_NAME "comp"
 #define ARITH_FUNC_NAME "arithmetic"
