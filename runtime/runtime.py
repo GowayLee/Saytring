@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from __future__ import annotations
 from enum import Enum
 from typing import List, Union, cast
 
@@ -56,19 +57,29 @@ class SaytringVar:
             return "None"
         return "None"  # Should never reach here
 
-    def set_value(self, value: Union[int, str, bool, list[str]]):
-        if isinstance(value, bool):
+    def _value_wrap(self, s: SaytringVar | Union[int, str, bool, list[str]]) -> int | str | bool | list[str]:
+        if isinstance(s, SaytringVar):
+            if s.get_type() == DataType.NULL_TYPE:
+                print("Saytring: Try to get value of a NULL_Type variable. This may cause unsafe behaviour")
+            return s.get_value()
+        else:
+            return s
+
+    def set_value(self, value: SaytringVar | Union[int, str, bool, list[str]]):
+        unwrap_value = self._value_wrap(value)
+
+        if isinstance(unwrap_value, bool):
             self._type = DataType.BOOL
-        elif isinstance(value, int):
+        elif isinstance(unwrap_value, int):
             self._type = DataType.INT
-        elif isinstance(value, str):
+        elif isinstance(unwrap_value, str):
             self._type = DataType.STRING
-        elif isinstance(value, list):
+        elif isinstance(unwrap_value, list):
             self._type = DataType.LIST
         else:
-            raise TypeError(f"Unsupported value type: {type(value)}")
+            raise TypeError(f"Unsupported value type: {type(unwrap_value)}")
 
-        self._value = value
+        self._value = unwrap_value
         self._str_value = self._to_string()
 
     def set_NULL_value(self, value: Union[int, str, bool, List[str]]):
