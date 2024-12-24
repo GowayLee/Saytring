@@ -1,0 +1,74 @@
+# Define a variable
+define var as ("")
+
+# Ask for user input
+ask "How are you bro? " as var
+
+# Type cast for string
+Convert var to string
+
+# Declare properties of `var`
+var has [reverse_str, sub_str, length, isp, rep_str, find_plc, lower, upper]
+
+# Say
+set var as ("Bro u r " + var do concat using [" today!"];)
+say(var)
+
+# Reverse
+var do reverse on reverse_str
+say("Reverse: " + var's reverse_str;)
+
+# substring
+var do substring using [2, 7] on sub_str
+say("Substring from 2 to 7: " + var's sub_str;)
+
+# Length
+var do get_length on length
+
+# Necessary type casting
+convert var's length to string
+say("Length: " + var's length;)
+
+# Is Palindrome
+var do is_palindrome on isp
+
+# Necessary type casting
+convert var's isp to string
+say("Is Palindrome: " + var's isp;)
+
+# Replace
+var do replace using ["Bro", "Sir"] on rep_str
+say("Replace bro with sir: " + var's rep_str;)
+
+# Find
+var do find using ["today"] on find_plc
+convert var's find_plc to string
+say("Find \"today\" at index: " + var's find_plc;)
+
+# Lower
+var do to_lower on lower
+say("Lowercase: " + var's lower;)
+
+# Upper
+var do to_upper on upper
+say("Uppercase: " + var's upper;)
+
+# Define another variable
+define list_var as ("")
+list_var has [split_list]
+
+# Ask for user input
+ask "Enter a list of words separated by comma: " as list_var
+
+# Type cast for string
+Convert list_var to string
+
+# Split
+list_var do split using [","] on split_list
+
+convert list_var's split_list to string
+say("List: " + list_var's split_list;)
+
+# Get_at
+list_var do split using [","] on split_list
+say("First element: " + list_var's split_list do get_at using [0];)
