@@ -33,7 +33,6 @@ char *string_buf_ptr;
 
 // String relavted
 #define MAX_STR_BUF_LOC string_buf + MAX_STR_CONST - 1
-bool is_escape = false;
 
 /* Reset string buffer once detect \"
  *  and ready to record string as stream.
@@ -41,7 +40,17 @@ bool is_escape = false;
 void reset_string_buf() {
 	string_buf[0] = '\0';
 	string_buf_ptr = string_buf;
-	is_escape = false;
+}
+
+bool append_char() {
+	*string_buf_ptr = yytext[0];
+
+  // Check if the string is too long
+  if (++string_buf_ptr >= MAX_STR_BUF_LOC) {
+    yylval.error_msg = "String constant too long";
+    return false;
+  }
+  return true;
 }
 
 // YYLTYPE is defined in AST.h
@@ -50,8 +59,6 @@ extern int yylineno;
 extern int yycolumn;
 
 int yycolumn = 1;
-
-// debug
 
 %}
 
@@ -65,7 +72,7 @@ int yycolumn = 1;
     yylloc.last_column = yycolumn - 1;
 %}
 
-%x INLINE_COMMENT NORMAL_STRING_CONST ERROR_STRING_CONST
+%x INLINE_COMMENT NORMAL_STRING_CONST ERROR_STRING_CONST ESCAPE_CHAR
 
 DELIME_EXNL  	                                        [ \t\f\v\r]
 NUMBER                                                -?[0-9]+
@@ -194,24 +201,32 @@ false                                                 {
 	BEGIN(NORMAL_STRING_CONST);
 	reset_string_buf();
 }
-<NORMAL_STRING_CONST>"\\"                             is_escape = true;
+
+ /*
+  *  Append "\\" to str_buf, only filter "\n" after escaping
+  */
+<NORMAL_STRING_CONST>"\\"                             {
+  if (append_char())
+    BEGIN(NORMAL_STRING_CONST);
+  else {
+    BEGIN(ERROR_STRING_CONST);
+    return ERROR;
+  }
+  BEGIN(ESCAPE_CHAR);
+}
 <NORMAL_STRING_CONST>"\n"                             {
   yylineno++;
   yycolumn = 1;
-  if (is_escape) {
-    is_escape = false;
-  } else {
-    // Assume the programmer simply forget the close-quote.
-    BEGIN(ERROR_STRING_CONST);
-    yylval.error_msg = "Unterminated string constant";
-    return ERROR;
-  }
+  // Assume the programmer simply forget the close-quote.
+  BEGIN(ERROR_STRING_CONST);
+  yylval.error_msg = "Unterminated string constant";
+  return ERROR;
 }
 <NORMAL_STRING_CONST>"\""                             {
   *string_buf_ptr = '\0';
   BEGIN(INITIAL);
-	yylval.symbol = str_tab->add_string(string_buf);
-	return STR_CONST;
+  yylval.symbol = str_tab->add_string(string_buf);
+  return STR_CONST;
 }
 <NORMAL_STRING_CONST>[^\0]*\0                         {
   BEGIN(ERROR_STRING_CONST);
@@ -224,12 +239,24 @@ false                                                 {
   return ERROR;
 }
 <NORMAL_STRING_CONST>.                                {
-	*string_buf_ptr = yytext[0];
-
-  // Check if the string is too long
-  if (++string_buf_ptr >= MAX_STR_BUF_LOC) {
+  if (append_char())
+    BEGIN(NORMAL_STRING_CONST);
+  else {
     BEGIN(ERROR_STRING_CONST);
-    yylval.error_msg = "String constant too long";
+    return ERROR;
+  }
+}
+
+<ESCAPE_CHAR>"\n"                                     {
+  yylineno++;
+  yycolumn = 1;
+  BEGIN(NORMAL_STRING_CONST);
+}
+<ESCAPE_CHAR>.                                        {
+  if (append_char())
+    BEGIN(NORMAL_STRING_CONST);
+  else {
+    BEGIN(ERROR_STRING_CONST);
     return ERROR;
   }
 }
